@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Voyage;
+use App\Models\Card;
+use App\Models\CardSold;
+use App\Models\Subscription;
+use App\Http\Requests\StoreVoyageRequest;
+use App\Http\Resources\VoyageResource;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class VoyageController extends Controller
+{
+    public function index()
+    {
+        $voyages = Voyage::with('card')->paginate(20);
+        return VoyageResource::collection($voyages);
+    }
+
+    public function store(StoreVoyageRequest $request)
+    {
+        $data = $request->validated();
+        $card = Card::where('uuid', $data['card_uuid'])->firstOrFail();
+        $amount = $data['amount'];
+
+        // Check card status
+        if ($card->status !== 'active') {
+            return response()->json(['message' => 'Card is not active'], 400);
+        }
+
+        // Check subscription
+        $subscription = $card->client->subscriptions()->where('status', 'active')
+            ->where('start_date', '<=', Carbon::now())
+            ->where('end_date', '>=', Carbon::now())
+            ->first();
+        if (!$subscription) {
+            return response()->json(['message' => 'No active subscription'], 400);
+        }
+
+        // Check balance
+        if ($card->balance < $amount) {
+            return response()->json(['message' => 'Insufficient balance'], 400);
+        }
+
+        DB::transaction(function () use ($card, $amount) {
+            $old = $card->balance;
+            $card->balance -= $amount;
+            $card->save();
+            $voyage = Voyage::create([
+                'uuid' => Str::uuid(),
+                'card_id' => $card->id,
+                'amount' => $amount,
+                'scanned_at' => now(),
+            ]);
+            CardSold::create([
+                'card_id' => $card->id,
+                'old_balance' => $old,
+                'new_balance' => $card->balance,
+                'reason' => 'voyage',
+                'created_at' => now(),
+            ]);
+        });
+        return response()->json(['message' => 'Voyage recorded successfully']);
+    }
+
+    public function show(Voyage $voyage)
+    {
+        return new VoyageResource($voyage->load('card'));
+    }
+}
