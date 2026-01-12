@@ -9,6 +9,7 @@ use App\Http\Controllers\VoyageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserStatsController;
+use App\Http\Controllers\DashboardController;
 
 // Public routes
 Route::post('login', [AuthController::class, 'login']);
@@ -38,4 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Subscriptions
     Route::apiResource('subscriptions', SubscriptionController::class);
+
+    // Dashboard route
+    Route::get('dashboard', [DashboardController::class, 'index']);
 });
