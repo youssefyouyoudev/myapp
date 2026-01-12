@@ -48,9 +48,12 @@ if (contactForm) {
         const message = document.getElementById('message').value;
 
         if (!name || !email || !subject || !message) {
-            alert('Please fill in all fields');
+            window.showToast('Please fill in all fields');
             return;
         }
+
+        // Show spinner
+        window.showSpinner();
 
         // Get CSRF token
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -72,16 +75,18 @@ if (contactForm) {
         })
         .then(response => response.json())
         .then(data => {
+            window.hideSpinner();
             if (data.success) {
-                alert('Thank you for your message! I will get back to you soon.');
+                window.showToast('Thank you for your message! I will get back to you soon.');
                 contactForm.reset();
             } else {
-                alert('Something went wrong. Please try again.');
+                window.showToast('Something went wrong. Please try again.');
             }
         })
         .catch(error => {
+            window.hideSpinner();
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            window.showToast('An error occurred. Please try again.');
         });
     });
 }
@@ -124,4 +129,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     animatedElements.forEach(el => observer.observe(el));
+});
+
+// Animate theme toggle button
+const themeToggle = document.getElementById('themeToggle');
+if (themeToggle) {
+    themeToggle.addEventListener('mousedown', () => {
+        themeToggle.style.transform = 'scale(0.92)';
+    });
+    themeToggle.addEventListener('mouseup', () => {
+        themeToggle.style.transform = 'scale(1)';
+    });
+    themeToggle.addEventListener('mouseleave', () => {
+        themeToggle.style.transform = 'scale(1)';
+    });
+}
+
+// Animate toast notifications
+const toast = document.getElementById('globalToast');
+if (toast) {
+    toast.addEventListener('transitionend', () => {
+        if (!toast.classList.contains('show')) {
+            toast.textContent = '';
+        }
+    });
+}
+
+// Animate spinner loader
+const spinner = document.getElementById('globalSpinner');
+if (spinner) {
+    spinner.querySelector('.loader').style.transition = 'transform 0.6s cubic-bezier(.4,0,.2,1)';
+}
+
+// Animate main content on theme change
+document.documentElement.addEventListener('transitionrun', function(e) {
+    if (e.propertyName === 'background') {
+        document.querySelector('main').style.boxShadow = '0 2px 24px rgba(139,92,246,0.18)';
+    }
+});
+document.documentElement.addEventListener('transitionend', function(e) {
+    if (e.propertyName === 'background') {
+        document.querySelector('main').style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)';
+    }
 });
