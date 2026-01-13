@@ -53,7 +53,8 @@
     </form>
 
     <script>
-        let token = '';
+          let token = '2|lEMBqHQYwXwnBs81LDvt3sY7cYj23MjrAmmf1ROE6010f12d';
+        localStorage.setItem('api_token', token);
 
         function setToken(newToken) {
             token = newToken;
@@ -62,6 +63,7 @@
         function getToken() {
             return token || localStorage.getItem('api_token') || '';
         }
+
 
         document.getElementById('login-form').onsubmit = async function(e) {
             e.preventDefault();
