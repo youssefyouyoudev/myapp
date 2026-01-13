@@ -16,13 +16,24 @@ class ClientController extends Controller
         $clients = Client::with('user', 'cards', 'payments', 'subscriptions')->paginate(20);
         return ClientResource::collection($clients);
     }
-
     public function store(StoreClientRequest $request)
     {
-        $data = $request->validated();
-        $data['uuid'] = Str::uuid();
-        $client = Client::create($data);
-        return new ClientResource($client->load('user', 'cards', 'payments', 'subscriptions'));
+        try {
+            $data = $request->validated();
+            // $data['uuid'] = Str::uuid();
+            $client = Client::create($data);
+            return new ClientResource($client->load('user', 'cards', 'payments', 'subscriptions'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTrace()
+                ]
+            ], 500);
+        }
     }
 
     public function show(Client $client)
