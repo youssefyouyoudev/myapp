@@ -10,14 +10,17 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            // $table->uuid('uuid')->unique();
+            $table->unsignedBigInteger('user_id');
             $table->string('full_name');
+            $table->string('phone');
+            $table->enum('status', ['active', 'suspended'])->default('active');
             $table->string('cin')->unique();
             $table->date('date_of_birth');
             $table->string('school');
-            $table->enum('status', ['active', 'suspended'])->default('active');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
