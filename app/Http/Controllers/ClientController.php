@@ -3,48 +3,50 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Http\Requests\StoreClientRequest;
-use App\Http\Requests\UpdateClientRequest;
-use App\Http\Resources\ClientResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
     public function index()
     {
-        $clients = Client::with('user', 'cards', 'payments', 'subscriptions')->paginate(20);
-        return ClientResource::collection($clients);
+        return Client::paginate(20);
     }
-    public function store(StoreClientRequest $request)
+
+    public function store(Request $request)
     {
-        try {
-            $data = $request->validated();
-            // $data['uuid'] = Str::uuid();
-            $client = Client::create($data);
-            return new ClientResource($client->load('user', 'cards', 'payments', 'subscriptions'));
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => [
-                    'message' => $e->getMessage(),
-                    'code' => $e->getCode(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTrace()
-                ]
-            ], 500);
-        }
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'full_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:255',
+            'status' => 'required|in:active,suspended',
+            'cin' => 'required|string|max:255|unique:clients,cin',
+            'date_of_birth' => 'required|date',
+            'school' => 'required|string|max:255',
+        ]);
+
+        $client = Client::create($validated);
+        return response()->json($client, 201);
     }
 
     public function show(Client $client)
     {
-        return new ClientResource($client->load('user', 'cards', 'payments', 'subscriptions'));
+        return response()->json($client);
     }
 
-    public function update(UpdateClientRequest $request, Client $client)
+    public function update(Request $request, Client $client)
     {
-        $client->update($request->validated());
-        return new ClientResource($client->fresh()->load('user', 'cards', 'payments', 'subscriptions'));
+        $validated = $request->validate([
+            'user_id' => 'sometimes|exists:users,id',
+            'full_name' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:255',
+            'status' => 'sometimes|in:active,suspended',
+            'cin' => 'sometimes|string|max:255|unique:clients,cin,' . $client->id,
+            'date_of_birth' => 'sometimes|date',
+            'school' => 'sometimes|string|max:255',
+        ]);
+
+        $client->update($validated);
+        return response()->json($client);
     }
 
     public function destroy(Client $client)
