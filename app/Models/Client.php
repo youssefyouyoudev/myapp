@@ -13,7 +13,7 @@ class Client extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uuid', 'user_id', 'full_name', 'phone', 'status',
+        'user_id', 'full_name', 'phone', 'status',
     ];
 
     public function user(): BelongsTo

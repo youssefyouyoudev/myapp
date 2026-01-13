@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
+            // $table->uuid('uuid')->unique();
             $table->string('full_name');
             $table->string('cin')->unique();
             $table->date('date_of_birth');
