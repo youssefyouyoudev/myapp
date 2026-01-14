@@ -46,12 +46,12 @@ class VoyageController extends Controller
             return response()->json(['message' => 'Insufficient balance'], 400);
         }
 
-        DB::transaction(function () use ($card, $amount) {
+        DB::transaction(function () use ($card, $amount, $data) {
             $old = $card->balance;
             $card->balance -= $amount;
             $card->save();
             $voyage = Voyage::create([
-                'uuid' => Str::uuid(),
+                'uuid' => $data['uuid'], // Use uuid from request (NFC)
                 'card_id' => $card->id,
                 'amount' => $amount,
                 'scanned_at' => now(),

@@ -20,7 +20,6 @@ class SubscriptionController extends Controller
     public function store(StoreSubscriptionRequest $request)
     {
         $data = $request->validated();
-        $data['uuid'] = Str::uuid();
         $subscription = Subscription::create($data);
         return new SubscriptionResource($subscription->load('client'));
     }

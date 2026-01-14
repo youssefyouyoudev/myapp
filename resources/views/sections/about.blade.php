@@ -70,7 +70,7 @@
                         </div>
                         <div class="language-item">
                             <span>French</span>
-                            <span class="language-level">Fluent</span>
+                            <span class="language-level">good</span>
                         </div>
                         <div class="language-item">
                             <span>English</span>
