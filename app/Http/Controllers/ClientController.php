@@ -30,6 +30,13 @@ class ClientController extends Controller
 
     public function show(Client $client)
     {
+        $client->load([
+            'cards',
+            'payments',
+            'subscriptions',
+            'activeSubscription',
+            'activeVoyage'
+        ]);
         return response()->json($client);
     }
 

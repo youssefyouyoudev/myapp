@@ -49,7 +49,7 @@ class Client extends Model
 
     public function activeVoyage()
     {
-        return $this->hasOne(Voyage::class)->where('status', 'active');
+        return $this->hasOne(Voyage::class);
     }
 
     public function hasActivePlan()
