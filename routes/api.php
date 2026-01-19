@@ -15,7 +15,7 @@ use App\Http\Controllers\DashboardController;
 Route::post('login', [AuthController::class, 'login']);
 
 // Protected routes
-// Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
@@ -25,7 +25,8 @@ Route::post('login', [AuthController::class, 'login']);
 
     // Clients (students)
     Route::apiResource('clients', ClientController::class);
-
+// get all users
+Route::get('users', [AuthController::class, 'getAllUsers']);
     // Cards
     Route::apiResource('cards', CardController::class);
     Route::post('cards/{card}/block', [CardController::class, 'block']);
@@ -42,4 +43,4 @@ Route::post('login', [AuthController::class, 'login']);
 
     // Dashboard route
     Route::get('dashboard', [DashboardController::class, 'index']);
-// });
+});

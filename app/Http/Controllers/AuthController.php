@@ -8,6 +8,13 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
+    //function to get all users
+    public function getAllUsers()
+    {
+        $users = User::all(['id', 'name', 'email', 'role',
+        'created_at', 'updated_at']);
+        return response()->json(['data' => $users]);
+    }
     public function login(Request $request)
     {
         $request->validate([
