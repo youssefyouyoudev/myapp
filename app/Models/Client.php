@@ -41,4 +41,19 @@ class Client extends Model
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)->where('status', 'active');
+    }
+
+    public function activeVoyage()
+    {
+        return $this->hasOne(Voyage::class)->where('status', 'active');
+    }
+
+    public function hasActivePlan()
+    {
+        return $this->activeSubscription()->exists() || $this->activeVoyage()->exists();
+    }
 }

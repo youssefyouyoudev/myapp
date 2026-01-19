@@ -16,31 +16,45 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('me', [AuthController::class, 'me']);
+	// Auth
+	Route::post('logout', [AuthController::class, 'logout']);
+	Route::get('me', [AuthController::class, 'me']);
 
-    // User stats/reporting
-    Route::get('users/me/stats', [UserStatsController::class, 'stats']);
+	// User stats/reporting
+	Route::get('users/me/stats', [UserStatsController::class, 'stats']);
+	Route::get('users', [AuthController::class, 'getAllUsers']);
 
-    // Clients (students)
-    Route::apiResource('clients', ClientController::class);
-// get all users
-Route::get('users', [AuthController::class, 'getAllUsers']);
-    // Cards
-    Route::apiResource('cards', CardController::class);
-    Route::post('cards/{card}/block', [CardController::class, 'block']);
-    Route::post('cards/{card}/unblock', [CardController::class, 'unblock']);
+	// Subscription Plans CRUD
+	Route::apiResource('subscription-plans', App\Http\Controllers\SubscriptionPlanController::class);
 
-    // Voyages (NFC scans)
-    Route::apiResource('voyages', VoyageController::class)->only(['index', 'store', 'show']);
+	// Voyage Plans CRUD
+	Route::apiResource('voyage-plans', App\Http\Controllers\VoyagePlanController::class);
 
-    // Payments (card charges)
-    Route::apiResource('payments', PaymentController::class)->only(['index', 'store', 'show']);
+	// Clients (students)
+	Route::apiResource('clients', ClientController::class);
 
-    // Subscriptions
-    Route::apiResource('subscriptions', SubscriptionController::class);
+	// Cards
+	Route::apiResource('cards', CardController::class);
+	Route::post('cards/{card}/block', [CardController::class, 'block']);
+	Route::post('cards/{card}/unblock', [CardController::class, 'unblock']);
+	// Card scan (NFC)
+	Route::get('cards/{nfc_uid}/scan', [CardController::class, 'scan']);
+	// Link card to client
+	Route::post('cards/{card}/link', [CardController::class, 'linkToClient']);
 
-    // Dashboard route
-    Route::get('dashboard', [DashboardController::class, 'index']);
+	// Charging endpoints (only one active plan at a time)
+	Route::post('clients/{client}/charge-subscription', [SubscriptionController::class, 'charge']);
+	Route::post('clients/{client}/charge-voyage', [VoyageController::class, 'charge']);
+
+	// Voyages (NFC scans)
+	Route::apiResource('voyages', VoyageController::class)->only(['index', 'store', 'show']);
+
+	// Payments (card charges)
+	Route::apiResource('payments', PaymentController::class)->only(['index', 'store', 'show']);
+
+	// Subscriptions
+	Route::apiResource('subscriptions', SubscriptionController::class);
+
+	// Dashboard route
+	Route::get('dashboard', [DashboardController::class, 'index']);
 });

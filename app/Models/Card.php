@@ -21,6 +21,11 @@ class Card extends Model
         return $this->belongsTo(Client::class);
     }
 
+    public function activeVoyage()
+    {
+        return $this->hasOne(Voyage::class)->where('status', 'active');
+    }
+
     public function voyages(): HasMany
     {
         return $this->hasMany(Voyage::class);

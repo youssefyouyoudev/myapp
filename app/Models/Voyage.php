@@ -11,11 +11,16 @@ class Voyage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uuid', 'card_id', 'amount', 'scanned_at',
+        'uuid', 'card_id', 'voyage_plan_id', 'amount', 'scanned_at', 'status',
     ];
 
     public function card(): BelongsTo
     {
         return $this->belongsTo(Card::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(VoyagePlan::class, 'voyage_plan_id');
     }
 }

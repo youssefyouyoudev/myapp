@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::view('/api-tester', 'test.testclientpost');
+Route::view('/api-tester', 'test.api-tester')->name('api-tester');
 
 // // Marriage Game routes
 // Route::get('/game', function() { return view('game.home'); })->name('game.home');
