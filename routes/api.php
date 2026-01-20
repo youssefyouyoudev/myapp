@@ -37,8 +37,13 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::apiResource('cards', CardController::class);
 	Route::post('cards/{card}/block', [CardController::class, 'block']);
 	Route::post('cards/{card}/unblock', [CardController::class, 'unblock']);
+	// Charge card for subscription or voyage (mutually exclusive)
+	Route::post('cards/{card}/charge-subscription', [CardController::class, 'chargeSubscription']);
+	Route::post('cards/{card}/charge-voyage', [CardController::class, 'chargeVoyage']);
 	// Card scan (NFC)
 	Route::get('cards/{nfc_uid}/scan', [CardController::class, 'scan']);
+	// Get client and card balance info by card NFC UID
+	Route::get('cards/{nfc_uid}/client-solde', [CardController::class, 'clientSoldeByUid']);
 	// Link card to client
 	Route::post('cards/{card}/link', [CardController::class, 'linkToClient']);
 
