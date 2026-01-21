@@ -116,50 +116,49 @@
             /**
              * Get client info and card balance by NFC UID.
              */
-     public function clientSoldeByUid($nfc_uid)
-{// Find the card by its NFC UID.
-    $card = \App\Models\Card::with(['client', 'client.subscriptions'])->where('nfc_uid', $nfc_uid)->first();
+// In your Laravel Controller for the client-solde endpoint
 
-    // 1. If the card is not found OR it has no client linked,
-    //    return a "not linked" response.
-    if (!$card || !$card->client_id) {
+public function clientSoldeByUid($nfc_uid)
+{
+    // Find the card by its NFC UID, and load the client relationship
+    $card = \App\Models\Card::with('client')->where('nfc_uid', $nfc_uid)->first();
+
+    // If the card or the client link doesn't exist, return a clear "not linked" response
+    if (!$card || !$card->client) {
         return response()->json([
             'isLinked' => false,
             'client' => null,
             'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
+            'cardId' => $card ? $card->id : null,
+            'cardUuid' => $nfc_uid
         ]);
     }
 
-    // 2. If the card IS found and linked, check for active monthly subscription
     $client = $card->client;
-    $activeSubscription = $client->subscriptions
-        ->where('status', 'active')
-        ->sortByDesc('start_date')
-        ->first();
 
-    $subscriptionInfo = null;
-    if ($activeSubscription) {
-        $startDate = $activeSubscription->start_date;
-        $endDate = $activeSubscription->end_date;
-        $currentMonth = now()->format('F');
-        $subscriptionInfo = [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'current_month' => $currentMonth,
-        ];
-    }
-
+    // If the card and client are found, return a complete and consistent response
     return response()->json([
         'isLinked' => true,
-        'client' => new \App\Http\Resources\ClientResource($client),
+        'client' => [
+            'id' => $client->id, // Essential: Include the client ID
+            'user_id' => $client->user_id,
+            'full_name' => $client->full_name,
+            'phone' => $client->phone,
+            'email' => $client->email,
+            'status' => $client->status,
+            'cin' => $client->cin,
+            'date_of_birth' => $client->date_of_birth,
+            'school' => $client->school,
+            'created_at' => $client->created_at,
+            'updated_at' => $client->updated_at,
+        ],
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
-        'subscription' => $subscriptionInfo,
+        'cardId' => $card->id, // Add the card's ID
+        'cardUuid' => $card->uuid // Add the card's UUID
     ]);
-}            /**
-             * Charge card for voyage (cannot have active subscription).
-             */
+}           
             public function chargeVoyage(\Illuminate\Http\Request $request, $cardId)
             {
                 $card = Card::with('client.subscriptions')->findOrFail($cardId);

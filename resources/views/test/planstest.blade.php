@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Test: Charge Subscription & Voyage</title>
+    {{-- <title>API Test: Charge Subscription & Voyage</title> --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script>
         async function submitForm(e, formId, resultId) {
@@ -40,7 +40,7 @@
 </head>
 <body class="bg-light">
 <div class="container py-5">
-    <h2 class="mb-4">Test API: Charge Subscription</h2>
+    <h2 class="mb-4"> Charge Subscription</h2>
     <form id="subscriptionForm" class="card card-body mb-4" onsubmit="submitForm(event, 'subscriptionForm', 'subscriptionResult')">
         <div class="mb-2">
             <label>Client ID</label>
@@ -76,7 +76,7 @@
 
     <hr class="my-5">
 
-    <h2 class="mb-4">Test API: Charge Voyage</h2>
+    <h2 class="mb-4"> Charge Voyage</h2>
     <form id="voyageForm" class="card card-body mb-4" onsubmit="submitForm(event, 'voyageForm', 'voyageResult')">
         <div class="mb-2">
             <label>Client ID</label>
