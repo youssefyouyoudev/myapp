@@ -34,7 +34,9 @@ class SubscriptionController extends Controller
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
         $data['card_id'] = $card->id;
+        $data['uuid'] = $card->uuid;
         $data['client_id'] = $card->client_id;
+
         unset($data['card_uuid']);
         $subscription = \App\Models\Subscription::create($data);
         // Optionally deduct price from card balance here if needed

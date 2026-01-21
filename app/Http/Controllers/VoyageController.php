@@ -39,6 +39,7 @@ class VoyageController extends Controller
         }
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
+        $data['uuid'] = $card->uuid;
         $data['card_id'] = $card->id;
         $data['client_id'] = $card->client_id;
         unset($data['card_uuid']);
