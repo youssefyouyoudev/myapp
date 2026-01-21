@@ -116,50 +116,30 @@
             /**
              * Get client info and card balance by NFC UID.
              */
-            public function clientSoldeByUid($nfc_uid)
-            {
-        $card = \App\Models\Card::with(['client', 'voyages', 'cardSolds', 'client.subscriptions'])->where('nfc_uid', $nfc_uid)->first();
-        if (!$card) {
-            return response()->json(['message' => 'Card not found'], 404);
-        }
-        $client = $card->client;
-        $soldeType = 'none';
-        // Check if card's client has active subscription
-        $hasActiveSubscription = $client && $client->subscriptions()->where('status', 'active')->exists();
-        if ($hasActiveSubscription) {
-            $soldeType = 'subscription_monthly';
-        } else {
-            // Check if card has any voyage
-            $hasVoyage = $card->voyages()->exists();
-            if ($hasVoyage) {
-                $soldeType = 'voyage';
-            }
-        }
+     public function clientSoldeByUid($nfc_uid)
+{// Find the card by its NFC UID.
+    $card = \App\Models\Card::with('client')->where('nfc_uid', $nfc_uid)->first();
+
+    // 1. If the card is not found OR it has no client linked,
+    //    return a "not linked" response.
+    if (!$card || !$card->client_id) {
         return response()->json([
-            'client' => $client,
-            'solde' => $card->balance,
-            'solde_type' => $soldeType,
-            'card' => $card,
+            'isLinked' => false,
+            'client' => null,
+            'cardStatus' => $card ? $card->status : 'Not Found', // Return status if card exists but not linked
+            'balance' => $card ? (float)$card->balance : null,
         ]);
-            }
+    }
 
-            /**
-             * Charge card for a monthly subscription (cannot have active voyage).
-             */
-            public function chargeSubscription(\Illuminate\Http\Request $request, $cardId)
-            {
-                $card = Card::with('voyages')->findOrFail($cardId);
-                // If card has any voyage, cannot subscribe
-                $hasVoyage = $card->voyages()->exists();
-                if ($hasVoyage) {
-                    return response()->json(['message' => 'Card already has voyage. Cannot subscribe.'], 400);
-                }
-                // ... logic to create subscription (you may want to move this to SubscriptionController)
-                // Example: $subscription = Subscription::create([...]);
-                return response()->json(['message' => 'Card charged for subscription successfully.']);
-            }
-
-            /**
+    // 2. If the card IS found and linked, return a "linked" response
+    //    with the exact structure the Android app expects.
+    return response()->json([
+        'isLinked' => true,
+        'client' => new \App\Http\Resources\ClientResource($card->client), // Use a resource for consistency
+        'cardStatus' => $card->status,
+        'balance' => (float)$card->balance, // Cast balance to a float
+    ]);
+}            /**
              * Charge card for voyage (cannot have active subscription).
              */
             public function chargeVoyage(\Illuminate\Http\Request $request, $cardId)
