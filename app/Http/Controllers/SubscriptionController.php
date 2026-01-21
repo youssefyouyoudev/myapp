@@ -16,7 +16,7 @@ class SubscriptionController extends Controller
     {
         try {
             $validated = $request->validate([
-                'uuid' => 'required|uuid|unique:subscriptions,uuid',
+                // 'uuid' => 'required|uuid|unique:subscriptions,uuid',
                 'subscription_plan_id' => 'required|exists:subscription_plans,id',
                 'card_uuid' => 'required|exists:cards,uuid',
                 'price' => 'required|numeric',

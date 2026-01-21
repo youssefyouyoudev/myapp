@@ -24,7 +24,7 @@ class VoyageController extends Controller
     {
         try {
             $validated = $request->validate([
-                'uuid' => 'required|uuid|unique:voyages,uuid',
+                // 'uuid' => 'required|uuid|unique:voyages,uuid',
                 'voyage_plan_id' => 'required|exists:voyage_plans,id',
                 'card_uuid' => 'required|exists:cards,uuid',
                 'amount' => 'required|numeric',
