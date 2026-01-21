@@ -45,8 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	// Get client and card balance info by card NFC UID
 	Route::get('cards/{nfc_uid}/client-solde', [CardController::class, 'clientSoldeByUid']);
 	// Link card to client
-	Route::post('cards/{card}/link', [CardController::class, 'linkToClient']);
-
+Route::post('cards/{nfcUid}/link', [CardController::class, 'linkToClient']);
 	// Charging endpoints (only one active plan at a time)
 	Route::post('clients/{client}/charge-subscription', [SubscriptionController::class, 'charge']);
 	Route::post('clients/{client}/charge-voyage', [VoyageController::class, 'charge']);
