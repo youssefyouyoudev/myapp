@@ -129,9 +129,9 @@
         if ($hasActiveSubscription) {
             $soldeType = 'subscription_monthly';
         } else {
-            // Check if card has active voyage
-            $hasActiveVoyage = $card->voyages()->where('status', 'active')->exists();
-            if ($hasActiveVoyage) {
+            // Check if card has any voyage
+            $hasVoyage = $card->voyages()->exists();
+            if ($hasVoyage) {
                 $soldeType = 'voyage';
             }
         }
@@ -149,10 +149,10 @@
             public function chargeSubscription(\Illuminate\Http\Request $request, $cardId)
             {
                 $card = Card::with('voyages')->findOrFail($cardId);
-                // If card has any active voyage, cannot subscribe
-                $hasActiveVoyage = $card->voyages()->where('status', 'active')->exists();
-                if ($hasActiveVoyage) {
-                    return response()->json(['message' => 'Card already has active voyage. Cannot subscribe.'], 400);
+                // If card has any voyage, cannot subscribe
+                $hasVoyage = $card->voyages()->exists();
+                if ($hasVoyage) {
+                    return response()->json(['message' => 'Card already has voyage. Cannot subscribe.'], 400);
                 }
                 // ... logic to create subscription (you may want to move this to SubscriptionController)
                 // Example: $subscription = Subscription::create([...]);
