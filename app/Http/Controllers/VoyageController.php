@@ -11,6 +11,7 @@ use App\Http\Resources\VoyageResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class VoyageController extends Controller
@@ -21,13 +22,21 @@ class VoyageController extends Controller
      */
     public function charge($clientId, \Illuminate\Http\Request $request)
     {
-        $validated = $request->validate([
-            'uid' => 'required|uuid|unique:voyages,uuid',
-            'voyage_plan_id' => 'required|exists:voyage_plans,id',
-            'card_uuid' => 'required|exists:cards,uuid',
-            'amount' => 'required|numeric',
-            'note' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'uuid' => 'required|uuid|unique:voyages,uuid',
+                'voyage_plan_id' => 'required|exists:voyage_plans,id',
+                'card_uuid' => 'required|exists:cards,uuid',
+                'amount' => 'required|numeric',
+                'note' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in voyage charge:', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
+        }
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
         $data['card_id'] = $card->id;

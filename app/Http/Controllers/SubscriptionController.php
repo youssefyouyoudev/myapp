@@ -8,20 +8,29 @@ use App\Http\Requests\UpdateSubscriptionRequest;
 use App\Http\Resources\SubscriptionResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
         public function charge($clientId, \Illuminate\Http\Request $request)
     {
-        $validated = $request->validate([
-            'uid' => 'required|uuid|unique:subscriptions,uuid',
-            'subscription_plan_id' => 'required|exists:subscription_plans,id',
-            'card_uuid' => 'required|exists:cards,uuid',
-            'price' => 'required|numeric',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'note' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'uuid' => 'required|uuid|unique:subscriptions,uuid',
+                'subscription_plan_id' => 'required|exists:subscription_plans,id',
+                'card_uuid' => 'required|exists:cards,uuid',
+                'price' => 'required|numeric',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'note' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in charge:', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
+        }
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
         $data['card_id'] = $card->id;
