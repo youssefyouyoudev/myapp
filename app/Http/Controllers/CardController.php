@@ -118,7 +118,7 @@
              */
      public function clientSoldeByUid($nfc_uid)
 {// Find the card by its NFC UID.
-    $card = \App\Models\Card::with('client')->where('nfc_uid', $nfc_uid)->first();
+    $card = \App\Models\Card::with(['client', 'client.subscriptions'])->where('nfc_uid', $nfc_uid)->first();
 
     // 1. If the card is not found OR it has no client linked,
     //    return a "not linked" response.
@@ -126,18 +126,36 @@
         return response()->json([
             'isLinked' => false,
             'client' => null,
-            'cardStatus' => $card ? $card->status : 'Not Found', // Return status if card exists but not linked
+            'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
         ]);
     }
 
-    // 2. If the card IS found and linked, return a "linked" response
-    //    with the exact structure the Android app expects.
+    // 2. If the card IS found and linked, check for active monthly subscription
+    $client = $card->client;
+    $activeSubscription = $client->subscriptions
+        ->where('status', 'active')
+        ->sortByDesc('start_date')
+        ->first();
+
+    $subscriptionInfo = null;
+    if ($activeSubscription) {
+        $startDate = $activeSubscription->start_date;
+        $endDate = $activeSubscription->end_date;
+        $currentMonth = now()->format('F');
+        $subscriptionInfo = [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'current_month' => $currentMonth,
+        ];
+    }
+
     return response()->json([
         'isLinked' => true,
-        'client' => new \App\Http\Resources\ClientResource($card->client), // Use a resource for consistency
+        'client' => new \App\Http\Resources\ClientResource($client),
         'cardStatus' => $card->status,
-        'balance' => (float)$card->balance, // Cast balance to a float
+        'balance' => (float)$card->balance,
+        'subscription' => $subscriptionInfo,
     ]);
 }            /**
              * Charge card for voyage (cannot have active subscription).
