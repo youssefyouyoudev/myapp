@@ -121,7 +121,7 @@
 public function clientSoldeByUid($nfc_uid)
 {
     // Find the card by its NFC UID, and load the client relationship
-    $card = \App\Models\Card::with('client')->where('nfc_uid', $nfc_uid)->first();
+    $card = \App\Models\Card::with(['client', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
 
     // If the card or the client link doesn't exist, return a clear "not linked" response
     if (!$card || !$card->client) {
@@ -131,13 +131,14 @@ public function clientSoldeByUid($nfc_uid)
             'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
             'cardId' => $card ? $card->id : null,
-            'cardUuid' => $nfc_uid
+            'cardUuid' => $nfc_uid,
+            'voyages' => $card ? $card->voyages : [],
+            'subscriptions' => $card ? $card->subscriptions : [],
         ]);
     }
 
     $client = $card->client;
 
-    // If the card and client are found, return a complete and consistent response
     return response()->json([
         'isLinked' => true,
         'client' => [
@@ -156,9 +157,11 @@ public function clientSoldeByUid($nfc_uid)
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
         'cardId' => $card->id, // Add the card's ID
-        'cardUuid' => $card->uuid // Add the card's UUID
+        'cardUuid' => $card->uuid, // Add the card's UUID
+        'voyages' => $card->voyages,
+        'subscriptions' => $card->subscriptions,
     ]);
-}           
+}
             public function chargeVoyage(\Illuminate\Http\Request $request, $cardId)
             {
                 $card = Card::with('client.subscriptions')->findOrFail($cardId);
