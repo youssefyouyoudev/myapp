@@ -73,44 +73,45 @@
     /**
      * Link a card to a client and return both card and client info.
      */
-    public function linkToClient(\Illuminate\Http\Request $request, $cardId)
-    {
-        $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'nfc_uid' => 'required|string|unique:cards,nfc_uid',
-            'balance' => 'nullable|numeric',
-            'status' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'expiration_date' => 'nullable|date',
-        ]);
+    public function linkToClient(\Illuminate\Http\Request $request, $nfcUid)
+{
+    // 1. Validate that the client_id exists.
+    $request->validate([
+        'client_id' => 'required|exists:clients,id',
+    ]);
 
-        // Try to find card, or create if not exists
-        $card = Card::find($cardId);
-        if (!$card) {
-            $now = now();
-            $year = $now->month >= 9 ? $now->year + 1 : $now->year;
-            $expiration = \Carbon\Carbon::create($year, 7, 31, 23, 59, 59);
-            $card = Card::create([
-                'id' => $cardId,
-                'nfc_uid' => $request->nfc_uid,
-                'balance' => $request->balance ?? 0,
-                'status' => $request->status ?? 'active',
-                'start_date' => $now,
-                'expiration_date' => $expiration,
-            ]);
-        }
+    // 2. Find a card by its nfc_uid, or prepare to create a new one.
+    // This assumes you have a unique 'nfc_uid' column on your 'cards' table.
+    $card = \App\Models\Card::firstOrNew(['nfc_uid' => $nfcUid]);
 
-        $client = \App\Models\Client::findOrFail($request->client_id);
-        $card->client_id = $client->id;
-        $card->save();
+    // 3. If the card is new (i.e., it doesn't exist in the database yet),
+    //    set its default properties.
+    if (!$card->exists) {
+        $now = now();
+        // Set expiration to July 31st of the next school year
+        $year = $now->month >= 9 ? $now->year + 1 : $now->year;
+        $expiration = \Carbon\Carbon::create($year, 7, 31, 23, 59, 59);
 
-        return response()->json([
-            'message' => 'Card stored and linked to client successfully.',
-            'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds'])),
-            'client' => $client,
-        ]);
+        $card->balance = 0;
+        $card->status = 'active';
+        $card->start_date = $now;
+        $card->expiration_date = $expiration;
     }
 
+    // 4. Find the client and link it to the card.
+    $client = \App\Models\Client::findOrFail($request->client_id);
+    $card->client_id = $client->id;
+
+    // 5. Save the card. This will either INSERT a new card or UPDATE the existing one.
+    $card->save();
+
+    // 6. Return a success response.
+    return response()->json([
+        'message' => 'Card linked to client successfully.',
+        'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds'])),
+        'client' => $client,
+    ]);
+}
             /**
              * Get client info and card balance by NFC UID.
              */
