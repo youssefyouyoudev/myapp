@@ -15,6 +15,44 @@ use Carbon\Carbon;
 
 class VoyageController extends Controller
 {
+
+    /**
+     * Charge a client for a voyage.
+     */
+    public function charge($clientId, \Illuminate\Http\Request $request)
+    {
+        $client = \App\Models\Client::findOrFail($clientId);
+        $validated = $request->validate([
+            'voyage_plan_id' => 'required|exists:voyage_plans,id',
+            'card_id' => 'required|exists:cards,id',
+            'amount' => 'required|numeric',
+            'note' => 'nullable|string',
+        ]);
+        $card = \App\Models\Card::findOrFail($validated['card_id']);
+        // Optionally deduct amount from card balance here if needed
+        $voyage = \App\Models\Voyage::create([
+            'card_id' => $card->id,
+            'voyage_plan_id' => $validated['voyage_plan_id'],
+            'amount' => $validated['amount'],
+            'scanned_at' => now(),
+        ]);
+        return response()->json([
+            'message' => 'Client charged for voyage successfully.',
+            'client_id' => $client->id,
+            'voyage' => [
+                'id' => $voyage->id,
+                'plan' => $voyage->plan->name ?? null,
+                'amount' => (float)$voyage->amount,
+                'card_id' => $card->id,
+                'scanned_at' => $voyage->scanned_at,
+            ],
+            'card' => [
+                'id' => $card->id,
+                'nfc_uid' => $card->nfc_uid,
+                'balance' => (float)$card->balance,
+            ],
+        ]);
+    }
     public function index()
     {
         $voyages = Voyage::with('card')->paginate(20);

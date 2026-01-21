@@ -11,6 +11,47 @@ use Illuminate\Support\Str;
 
 class SubscriptionController extends Controller
 {
+        public function charge($clientId, \Illuminate\Http\Request $request)
+    {
+        $client = \App\Models\Client::findOrFail($clientId);
+        $validated = $request->validate([
+            'subscription_plan_id' => 'required|exists:subscription_plans,id',
+            'card_id' => 'required|exists:cards,id',
+            'price' => 'required|numeric',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'note' => 'nullable|string',
+        ]);
+        $subscription = \App\Models\Subscription::create([
+            'client_id' => $client->id,
+            'subscription_plan_id' => $validated['subscription_plan_id'],
+            'card_id' => $validated['card_id'],
+            'price' => $validated['price'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'status' => 'active',
+        ]);
+        $card = \App\Models\Card::findOrFail($validated['card_id']);
+        // Optionally deduct price from card balance here if needed
+        return response()->json([
+            'message' => 'Client charged for subscription (monthly) successfully.',
+            'client_id' => $client->id,
+            'subscription' => [
+                'id' => $subscription->id,
+                'plan' => $subscription->plan->name ?? null,
+                'price' => (float)$subscription->price,
+                'start_date' => $subscription->start_date,
+                'end_date' => $subscription->end_date,
+                'card_id' => $card->id,
+                'created_at' => $subscription->created_at,
+            ],
+            'card' => [
+                'id' => $card->id,
+                'nfc_uid' => $card->nfc_uid,
+                'balance' => (float)$card->balance,
+            ],
+        ]);
+    }
     public function index()
     {
         $subscriptions = Subscription::with('client')->paginate(20);
