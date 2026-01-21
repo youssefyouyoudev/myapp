@@ -16,6 +16,11 @@ class Card extends Model
         'uuid', 'client_id', 'nfc_uid', 'balance', 'status',
     ];
 
+    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Subscription::class);
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
