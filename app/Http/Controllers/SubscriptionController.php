@@ -15,6 +15,7 @@ class SubscriptionController extends Controller
     {
         $client = \App\Models\Client::findOrFail($clientId);
         $validated = $request->validate([
+            'uuid' => 'required|uuid|unique:subscriptions,uuid',
             'subscription_plan_id' => 'required|exists:subscription_plans,id',
             'card_uuid' => 'required|exists:cards,uuid',
             'price' => 'required|numeric',
@@ -24,6 +25,7 @@ class SubscriptionController extends Controller
         ]);
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $subscription = \App\Models\Subscription::create([
+            'uuid' => $validated['uuid'],
             'client_id' => $client->id,
             'subscription_plan_id' => $validated['subscription_plan_id'],
             'card_id' => $card->id,
