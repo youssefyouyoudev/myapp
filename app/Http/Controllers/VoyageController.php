@@ -90,6 +90,7 @@ class VoyageController extends Controller
             $voyage = Voyage::create([
                 'uuid' => $data['uuid'], // Use uuid from request (NFC)
                 'card_id' => $card->id,
+                'client_id' => $card->client_id,
                 'voyage_plan_id' => $data['voyage_plan_id'] ?? null,
                 'amount' => $amount,
                 'scanned_at' => now(),

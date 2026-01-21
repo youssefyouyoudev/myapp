@@ -61,6 +61,7 @@ class SubscriptionController extends Controller
         if (isset($data['card_uuid'])) {
             $card = \App\Models\Card::where('uuid', $data['card_uuid'])->firstOrFail();
             $data['card_id'] = $card->id;
+            $data['client_id'] = $card->client_id;
             unset($data['card_uuid']);
         }
         $subscription = Subscription::create($data);
