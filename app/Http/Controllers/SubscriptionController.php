@@ -13,7 +13,6 @@ class SubscriptionController extends Controller
 {
         public function charge($clientId, \Illuminate\Http\Request $request)
     {
-        $client = \App\Models\Client::findOrFail($clientId);
         $validated = $request->validate([
             'uuid' => 'required|uuid|unique:subscriptions,uuid',
             'subscription_plan_id' => 'required|exists:subscription_plans,id',
@@ -26,12 +25,13 @@ class SubscriptionController extends Controller
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
         $data['card_id'] = $card->id;
+        $data['client_id'] = $card->client_id;
         unset($data['card_uuid']);
         $subscription = \App\Models\Subscription::create($data);
         // Optionally deduct price from card balance here if needed
         return response()->json([
             'message' => 'Client charged for subscription (monthly) successfully.',
-            'client_id' => $client->id,
+            'client_id' => $card->client_id,
             'subscription' => [
                 'id' => $subscription->id,
                 'plan' => $subscription->plan->name ?? null,

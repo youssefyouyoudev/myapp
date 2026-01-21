@@ -21,7 +21,6 @@ class VoyageController extends Controller
      */
     public function charge($clientId, \Illuminate\Http\Request $request)
     {
-        $client = \App\Models\Client::findOrFail($clientId);
         $validated = $request->validate([
             'uuid' => 'required|uuid|unique:voyages,uuid',
             'voyage_plan_id' => 'required|exists:voyage_plans,id',
@@ -32,12 +31,13 @@ class VoyageController extends Controller
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
         $data['card_id'] = $card->id;
+        $data['client_id'] = $card->client_id;
         unset($data['card_uuid']);
         // Optionally deduct amount from card balance here if needed
         $voyage = \App\Models\Voyage::create($data);
         return response()->json([
             'message' => 'Client charged for voyage successfully.',
-            'client_id' => $client->id,
+            'client_id' => $card->client_id,
             'voyage' => [
                 'id' => $voyage->id,
                 'plan' => $voyage->plan->name ?? null,
