@@ -30,14 +30,11 @@ class VoyageController extends Controller
             'note' => 'nullable|string',
         ]);
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
+        $data = $validated;
+        $data['card_id'] = $card->id;
+        unset($data['card_uuid']);
         // Optionally deduct amount from card balance here if needed
-        $voyage = \App\Models\Voyage::create([
-            'uuid' => $validated['uuid'],
-            'card_id' => $card->id,
-            'voyage_plan_id' => $validated['voyage_plan_id'],
-            'amount' => $validated['amount'],
-            'scanned_at' => now(),
-        ]);
+        $voyage = \App\Models\Voyage::create($data);
         return response()->json([
             'message' => 'Client charged for voyage successfully.',
             'client_id' => $client->id,

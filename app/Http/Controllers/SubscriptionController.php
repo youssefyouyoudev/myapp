@@ -24,16 +24,10 @@ class SubscriptionController extends Controller
             'note' => 'nullable|string',
         ]);
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
-        $subscription = \App\Models\Subscription::create([
-            'uuid' => $validated['uuid'],
-            'client_id' => $client->id,
-            'subscription_plan_id' => $validated['subscription_plan_id'],
-            'card_id' => $card->id,
-            'price' => $validated['price'],
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
-            'status' => 'active',
-        ]);
+        $data = $validated;
+        $data['card_id'] = $card->id;
+        unset($data['card_uuid']);
+        $subscription = \App\Models\Subscription::create($data);
         // Optionally deduct price from card balance here if needed
         return response()->json([
             'message' => 'Client charged for subscription (monthly) successfully.',
