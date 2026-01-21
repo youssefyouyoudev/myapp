@@ -39,6 +39,16 @@ class SubscriptionController extends Controller
 
         unset($data['card_uuid']);
         $subscription = \App\Models\Subscription::create($data);
+        // Store payment record
+        \App\Models\Payment::create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'user_id' => $request->user()->id ?? null,
+            'client_id' => $subscription->client_id,
+            'card_id' => $subscription->card_id,
+            'amount' => $subscription->price,
+            'method' => 'espece',
+            'reference' => null,
+        ]);
         // Optionally deduct price from card balance here if needed
         return response()->json([
             'message' => 'Client charged for subscription (monthly) successfully.',

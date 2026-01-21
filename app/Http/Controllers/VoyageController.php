@@ -45,6 +45,16 @@ class VoyageController extends Controller
         unset($data['card_uuid']);
         // Optionally deduct amount from card balance here if needed
         $voyage = \App\Models\Voyage::create($data);
+        // Store payment record
+        \App\Models\Payment::create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'user_id' => $request->user()->id ?? null,
+            'client_id' => $voyage->client_id,
+            'card_id' => $voyage->card_id,
+            'amount' => $voyage->amount,
+            'method' => 'espece',
+            'reference' => null,
+        ]);
         return response()->json([
             'message' => 'Client charged for voyage successfully.',
             'client_id' => $card->client_id,
