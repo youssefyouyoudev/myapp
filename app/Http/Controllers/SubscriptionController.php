@@ -63,6 +63,12 @@ class SubscriptionController extends Controller
     public function store(StoreSubscriptionRequest $request)
     {
         $data = $request->validated();
+        // Find card by uuid and set card_id
+        if (isset($data['card_uuid'])) {
+            $card = \App\Models\Card::where('uuid', $data['card_uuid'])->firstOrFail();
+            $data['card_id'] = $card->id;
+            unset($data['card_uuid']);
+        }
         $subscription = Subscription::create($data);
         return new SubscriptionResource($subscription->load('client'));
     }
