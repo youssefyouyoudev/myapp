@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
         // Optionally deduct price from card balance here if needed
         return response()->json([
             'message' => 'Client charged for subscription (monthly) successfully.',
-            'client_id' => $card->client_id,
+            'client_id' => $subscription->client_id,
             'subscription' => [
                 'id' => $subscription->id,
                 'plan' => $subscription->plan->name ?? null,
@@ -57,12 +57,17 @@ class SubscriptionController extends Controller
     public function store(StoreSubscriptionRequest $request)
     {
         $data = $request->validated();
-        // Find card by uuid and set card_id
+        // Always set card_id and client_id
         if (isset($data['card_uuid'])) {
             $card = \App\Models\Card::where('uuid', $data['card_uuid'])->firstOrFail();
             $data['card_id'] = $card->id;
             $data['client_id'] = $card->client_id;
             unset($data['card_uuid']);
+        } elseif (isset($data['card_id'])) {
+            $card = \App\Models\Card::findOrFail($data['card_id']);
+            $data['client_id'] = $card->client_id;
+        } else {
+            abort(422, 'card_uuid or card_id is required');
         }
         $subscription = Subscription::create($data);
         return new SubscriptionResource($subscription->load('client'));
