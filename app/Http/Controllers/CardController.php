@@ -96,6 +96,7 @@
         $card->status = 'active';
         $card->start_date = $now;
         $card->expiration_date = $expiration;
+        $card->uuid = $nfcUid;
     }
 
     // 4. Find the client and link it to the card.
