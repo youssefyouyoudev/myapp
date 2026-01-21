@@ -14,7 +14,7 @@ class SubscriptionController extends Controller
         public function charge($clientId, \Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
-            'uuid' => 'required|uuid|unique:subscriptions,uuid',
+            'uid' => 'required|uuid|unique:subscriptions,uuid',
             'subscription_plan_id' => 'required|exists:subscription_plans,id',
             'card_uuid' => 'required|exists:cards,uuid',
             'price' => 'required|numeric',

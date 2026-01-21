@@ -22,7 +22,7 @@ class VoyageController extends Controller
     public function charge($clientId, \Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
-            'uuid' => 'required|uuid|unique:voyages,uuid',
+            'uid' => 'required|uuid|unique:voyages,uuid',
             'voyage_plan_id' => 'required|exists:voyage_plans,id',
             'card_uuid' => 'required|exists:cards,uuid',
             'amount' => 'required|numeric',
