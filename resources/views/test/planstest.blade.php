@@ -51,8 +51,8 @@
             <input type="number" name="subscription_plan_id" class="form-control" required>
         </div>
         <div class="mb-2">
-            <label>Card ID</label>
-            <input type="number" name="card_id" class="form-control" required>
+            <label>Card UUID</label>
+            <input type="text" name="card_uuid" class="form-control" required>
         </div>
         <div class="mb-2">
             <label>Price</label>
@@ -87,8 +87,8 @@
             <input type="number" name="voyage_plan_id" class="form-control" required>
         </div>
         <div class="mb-2">
-            <label>Card ID</label>
-            <input type="number" name="card_id" class="form-control" required>
+            <label>Card UUID</label>
+            <input type="text" name="card_uuid" class="form-control" required>
         </div>
         <div class="mb-2">
             <label>Amount</label>

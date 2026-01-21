@@ -24,11 +24,11 @@ class VoyageController extends Controller
         $client = \App\Models\Client::findOrFail($clientId);
         $validated = $request->validate([
             'voyage_plan_id' => 'required|exists:voyage_plans,id',
-            'card_id' => 'required|exists:cards,id',
+            'card_uuid' => 'required|exists:cards,uuid',
             'amount' => 'required|numeric',
             'note' => 'nullable|string',
         ]);
-        $card = \App\Models\Card::findOrFail($validated['card_id']);
+        $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         // Optionally deduct amount from card balance here if needed
         $voyage = \App\Models\Voyage::create([
             'card_id' => $card->id,
