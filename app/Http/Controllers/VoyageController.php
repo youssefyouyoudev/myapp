@@ -50,8 +50,8 @@ class VoyageController extends Controller
         \App\Models\Payment::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
             'user_id' => $request->user_id ?? null,
-            'client_id' => $voyage->client_id,
-            'card_id' => $voyage->card_id,
+            'client_id' => $card->client_id,
+            'card_id' => $card->id,
             'amount' => $voyage->amount,
             'method' => 'espece',
             'reference' => null,
