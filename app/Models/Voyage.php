@@ -11,7 +11,7 @@ class Voyage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uuid', 'card_id', 'voyage_plan_id', 'amount', 'scanned_at', 'status',"card_id"
+        'uuid', 'card_id', 'voyage_plan_id', 'amount', 'scanned_at', 'status',"card_id","number_voyages"
     ];
 
     public function card(): BelongsTo

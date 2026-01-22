@@ -13,6 +13,8 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('card_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
+            //number voyages
+            $table->integer('number_voyages')->default(0);
             $table->timestamp('scanned_at');
             $table->timestamps();
         });

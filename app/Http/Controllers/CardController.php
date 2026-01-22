@@ -8,8 +8,68 @@
         use App\Http\Resources\CardResource;
         use Illuminate\Support\Str;
 
-        class CardController extends Controller
-        {
+    class CardController extends Controller{
+    /**
+     * Validate a card for voyage or subscription.
+     *
+     * - If the card has an active subscription, allow up to 4 validations per day.
+     * - If not, decrement solde (balance) by 1 if possible.
+     */
+     function validateCard($cardId)
+    {
+        $card = Card::with(['client.subscriptions' => function($q) {
+            $q->where('status', 'active')
+              ->where('start_date', '<=', now())
+              ->where('end_date', '>=', now());
+        }])->findOrFail($cardId);
+
+        $now = now();
+        $today = $now->toDateString();
+
+        // Check for active subscription
+        $activeSubscription = $card->client && $card->client->subscriptions->first();
+        if ($activeSubscription) {
+            // Count today's validations for this card (assuming a Voyage is created per validation)
+            $todayValidations = $card->voyages()->whereDate('created_at', $today)->count();
+            if ($todayValidations >= 4) {
+                return response()->json([
+                    'success' => false,
+                    'reason' => 'Subscription limit reached (4 per day)',
+                ], 403);
+            }
+            // Allow validation
+            // Optionally, create a Voyage record here if needed
+            return response()->json([
+                'success' => true,
+                'type' => 'subscription',
+                'message' => 'Validation allowed (subscription)',
+                'remaining' => 4 - $todayValidations,
+            ]);
+        }
+
+
+        // No active subscription: check for voyage with number_voyages > 0
+        $voyage = \App\Models\Voyage::where('card_id', $card->id)
+            ->where('number_voyages', '>', 0)
+            ->orderByDesc('id')
+            ->first();
+        if ($voyage) {
+            $voyage->number_voyages -= 1;
+            $voyage->save();
+            return response()->json([
+                'success' => true,
+                'type' => 'voyage',
+                'message' => 'Validation allowed (voyage solde)',
+                'remaining' => $voyage->number_voyages,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'reason' => 'Insufficient solde and no active subscription',
+        ], 403);
+    }
+
     public function index()
     {
         $cards = Card::with('client', 'voyages', 'cardSolds')->paginate(20);

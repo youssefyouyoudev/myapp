@@ -16,6 +16,8 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+				// Card validation (subscription/voyage logic)
+				Route::post('cards/{card}/validate', [CardController::class, 'validateCard']);
 			Route::get('logs', [\App\Http\Controllers\LogController::class, 'index']);
 			Route::get('logs/user/{user_id}', [\App\Http\Controllers\LogController::class, 'getByUserId']);
 		// Logs
