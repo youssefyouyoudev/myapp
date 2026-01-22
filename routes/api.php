@@ -45,6 +45,8 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::apiResource('cards', CardController::class);
 	Route::post('cards/{card}/block', [CardController::class, 'block']);
 	Route::post('cards/{card}/unblock', [CardController::class, 'unblock']);
+	// Update client linked to card
+	Route::put('cards/{card}/update-client', [CardController::class, 'updateClient']);
 	// Charge card for subscription or voyage (mutually exclusive)
 	Route::post('cards/{card}/charge-subscription', [CardController::class, 'chargeSubscription']);
 	Route::post('cards/{card}/charge-voyage', [CardController::class, 'chargeVoyage']);

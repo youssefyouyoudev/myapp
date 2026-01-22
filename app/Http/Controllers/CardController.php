@@ -9,6 +9,27 @@
         use Illuminate\Support\Str;
 
     class CardController extends Controller{
+        /**
+         * Update the client linked to a card.
+         * @param \Illuminate\Http\Request $request
+         * @param int $cardId
+         * @return \Illuminate\Http\JsonResponse
+         */
+        public function updateClient(Request $request, $cardId)
+        {
+            $request->validate([
+                'client_id' => 'required|exists:clients,id',
+            ]);
+            $card = Card::findOrFail($cardId);
+            $client = \App\Models\Client::findOrFail($request->client_id);
+            $card->client_id = $client->id;
+            $card->save();
+            return response()->json([
+                'message' => 'Client updated for card successfully.',
+                'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds'])),
+                'client' => $client,
+            ]);
+        }
     /**
      * Validate a card for voyage or subscription.
      *
