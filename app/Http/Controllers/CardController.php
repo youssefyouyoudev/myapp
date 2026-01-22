@@ -7,6 +7,7 @@
         use App\Http\Requests\UpdateCardRequest;
         use App\Http\Resources\CardResource;
         use Illuminate\Support\Str;
+        use Illuminate\Http\Request;
 
     class CardController extends Controller{
         /**
