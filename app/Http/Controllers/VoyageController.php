@@ -57,7 +57,7 @@ class VoyageController extends Controller
 
     if ($voyage) {
         // Assumes the DB column is 'number_of_voyages'
-        $voyage->number_of_voyages += $newNumberVoyages;
+        $voyage->number_voyages += $newNumberVoyages;
         $voyage->save();
         $action = 'recharged_existing_voyage';
     } else {
@@ -67,7 +67,7 @@ class VoyageController extends Controller
     }
 
     // Assumes the DB column is 'number_of_voyages'
-    $card->number_of_voyages += $newNumberVoyages;
+    $card->number_voyages += $newNumberVoyages;
     $card->save();
 
     \App\Models\Payment::create([
