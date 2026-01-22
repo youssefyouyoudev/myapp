@@ -21,49 +21,44 @@ class UserStatsController extends Controller
         $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
         $startOfYear = $now->copy()->startOfYear();
 
+
+        // Only payments for the logged-in user
+        $userPayments = Payment::where('user_id', $user->id);
+
         // Totals
-        $totalPayments = Payment::sum('amount');
-        $totalCount = Payment::count();
+        $totalPayments = (clone $userPayments)->sum('amount');
+        $totalCount = (clone $userPayments)->count();
 
         // Today
-        $todayAmount = Payment::whereDate('created_at', $today)->sum('amount');
-        $todayCount = Payment::whereDate('created_at', $today)->count();
+        $todayAmount = (clone $userPayments)->whereDate('created_at', $today)->sum('amount');
+        $todayCount = (clone $userPayments)->whereDate('created_at', $today)->count();
 
         // Yesterday
-        $yesterdayAmount = Payment::whereDate('created_at', $yesterday)->sum('amount');
+        $yesterdayAmount = (clone $userPayments)->whereDate('created_at', $yesterday)->sum('amount');
 
         // This month
-        $thisMonthAmount = Payment::whereYear('created_at', $now->year)
+        $thisMonthAmount = (clone $userPayments)->whereYear('created_at', $now->year)
             ->whereMonth('created_at', $now->month)
             ->sum('amount');
-        $thisMonthCount = Payment::whereYear('created_at', $now->year)
+        $thisMonthCount = (clone $userPayments)->whereYear('created_at', $now->year)
             ->whereMonth('created_at', $now->month)
             ->count();
 
         // Last month
-        $lastMonthAmount = Payment::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->sum('amount');
+        $lastMonthAmount = (clone $userPayments)->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->sum('amount');
 
         // This year
-        $thisYearAmount = Payment::whereYear('created_at', $now->year)->sum('amount');
-        $thisYearCount = Payment::whereYear('created_at', $now->year)->count();
-
-        // Top 5 users by payment amount this month
-        $topUsers = Payment::selectRaw('user_id, SUM(amount) as total')
-            ->whereYear('created_at', $now->year)
-            ->whereMonth('created_at', $now->month)
-            ->groupBy('user_id')
-            ->orderByDesc('total')
-            ->with('user')
-            ->limit(5)
-            ->get();
+        $thisYearAmount = (clone $userPayments)->whereYear('created_at', $now->year)->sum('amount');
+        $thisYearCount = (clone $userPayments)->whereYear('created_at', $now->year)->count();
 
         // Payment breakdown by method (all time)
-        $byMethod = Payment::selectRaw('method, SUM(amount) as total, COUNT(*) as count')
+        $byMethod = (clone $userPayments)
+            ->selectRaw('method, SUM(amount) as total, COUNT(*) as count')
             ->groupBy('method')
             ->get();
 
         // Recent payments (last 5)
-        $recent = Payment::with('user')->orderByDesc('created_at')->limit(5)->get();
+        $recent = (clone $userPayments)->with('user')->orderByDesc('created_at')->limit(5)->get();
 
         // Growth
         $todayGrowth = $yesterdayAmount > 0 ? (($todayAmount - $yesterdayAmount) / $yesterdayAmount) * 100 : null;
@@ -88,7 +83,6 @@ class UserStatsController extends Controller
                 'amount' => (float) $thisYearAmount,
                 'count' => $thisYearCount,
             ],
-            'topUsers' => $topUsers,
             'byMethod' => $byMethod,
             'recent' => $recent,
         ]);
