@@ -99,7 +99,7 @@ class VoyageController extends Controller
             'nfc_uid' => $card->nfc_uid,
             'balance' => (float)$card->balance,
             // also updated here for consistency in the response
-            'number_of_voyages' => $card->number_of_voyages,
+            'number_of_voyages' => $card->number_voyages,
         ],
     ]);
 }
