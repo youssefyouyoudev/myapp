@@ -11,7 +11,7 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uuid', 'client_id', 'card_id', 'amount', 'method', 'reference',
+        'uuid', 'client_id', 'card_id', 'amount', 'method', 'reference',"user_id"
     ];
 
     public function client(): BelongsTo
@@ -22,5 +22,9 @@ class Payment extends Model
     public function card(): BelongsTo
     {
         return $this->belongsTo(Card::class);
+    }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
