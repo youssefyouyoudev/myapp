@@ -38,7 +38,16 @@ class SubscriptionController extends Controller
         $data['client_id'] = $card->client_id;
 
         unset($data['card_uuid']);
-        $subscription = \App\Models\Subscription::create($data);
+        // Check for existing active subscription for this card/client
+        $subscription = \App\Models\Subscription::where('client_id', $data['client_id'])
+            ->where('card_id', $data['card_id'])
+            ->where('status', 'active')
+            ->first();
+        if ($subscription) {
+            $subscription->update($data);
+        } else {
+            $subscription = \App\Models\Subscription::create($data);
+        }
         // Store payment record
         \App\Models\Payment::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
