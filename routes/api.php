@@ -16,6 +16,10 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+			Route::get('logs', [\App\Http\Controllers\LogController::class, 'index']);
+			Route::get('logs/user/{user_id}', [\App\Http\Controllers\LogController::class, 'getByUserId']);
+		// Logs
+		Route::post('logs/bulk', [\App\Http\Controllers\LogController::class, 'store']);
 	// Auth
 	Route::post('logout', [AuthController::class, 'logout']);
 	Route::get('me', [AuthController::class, 'me']);

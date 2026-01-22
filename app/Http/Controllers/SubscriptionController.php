@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Log;
 class SubscriptionController extends Controller
 {
         public function charge($clientId, \Illuminate\Http\Request $request)
+            // ...existing code...
+            $this->logUserAction('charge_subscription', 'Subscription', $subscription->id, [
+                'request' => $request->all(),
+                'subscription_id' => $subscription->id,
+            ]);
     {
         try {
             $validated = $request->validate([
@@ -90,6 +95,11 @@ class SubscriptionController extends Controller
     }
 
     public function store(StoreSubscriptionRequest $request)
+            // ...existing code...
+            $this->logUserAction('create_subscription', 'Subscription', $subscription->id, [
+                'request' => $request->all(),
+                'subscription_id' => $subscription->id,
+            ]);
     {
         $data = $request->validated();
         // Always set card_id and client_id
@@ -114,12 +124,19 @@ class SubscriptionController extends Controller
     }
 
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription)
+            // ...existing code...
+            $this->logUserAction('update_subscription', 'Subscription', $subscription->id, [
+                'request' => $request->all(),
+                'subscription_id' => $subscription->id,
+            ]);
     {
         $subscription->update($request->validated());
         return new SubscriptionResource($subscription->fresh()->load('client'));
     }
 
     public function destroy(Subscription $subscription)
+        // ...existing code...
+        $this->logUserAction('delete_subscription', 'Subscription', $subscription->id);
     {
         $subscription->delete();
         return response()->json(['message' => 'Subscription deleted successfully']);

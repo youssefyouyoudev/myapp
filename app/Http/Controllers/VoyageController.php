@@ -21,6 +21,11 @@ class VoyageController extends Controller
      * Charge a client for a voyage.
      */
     public function charge($clientId, \Illuminate\Http\Request $request)
+            // ...existing code...
+            $this->logUserAction('charge_voyage', 'Voyage', $voyage->id, [
+                'request' => $request->all(),
+                'voyage_id' => $voyage->id,
+            ]);
     {
         try {
             $validated = $request->validate([
@@ -79,6 +84,12 @@ class VoyageController extends Controller
     }
 
     public function store(StoreVoyageRequest $request)
+            // ...existing code...
+            // Log after successful voyage creation
+            // You may need to fetch the created voyage if needed
+            $this->logUserAction('create_voyage', 'Voyage', null, [
+                'request' => $request->all(),
+            ]);
     {
         $data = $request->validated();
         $card = Card::where('uuid', $data['card_uuid'])->firstOrFail();
