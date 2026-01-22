@@ -56,6 +56,11 @@
         if ($voyage) {
             $voyage->number_voyages -= 1;
             $voyage->save();
+            // Also decrement card's number_voyages
+            if ($card->number_voyages > 0) {
+                $card->number_voyages -= 1;
+                $card->save();
+            }
             return response()->json([
                 'success' => true,
                 'type' => 'voyage',

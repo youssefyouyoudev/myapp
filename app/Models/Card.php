@@ -13,7 +13,7 @@ class Card extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'uuid', 'client_id', 'nfc_uid', 'balance', 'status',
+        'uuid', 'client_id', 'nfc_uid', 'balance', 'status', 'number_voyages',
     ];
 
     public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany

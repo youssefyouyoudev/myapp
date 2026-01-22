@@ -31,7 +31,7 @@ class VoyageController extends Controller
                 'note' => 'nullable|string',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error in voyage charge:', [
+            Log::error('Validation error in voyage charge:', [
                 'errors' => $e->errors(),
                 'input' => $request->all()
             ]);
@@ -64,6 +64,9 @@ class VoyageController extends Controller
             $voyage = \App\Models\Voyage::create($data);
             $action = 'created_new_voyage';
         }
+        // Update card's number_voyages
+        $card->number_voyages += $newNumberVoyages;
+        $card->save();
 
         // Store payment record
         \App\Models\Payment::create([
