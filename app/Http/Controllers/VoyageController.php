@@ -42,6 +42,7 @@ class VoyageController extends Controller
         $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
         $data['card_id'] = $card->id;
         $data['client_id'] = $card->client_id;
+        $data['scanned_at'] = now();
         unset($data['card_uuid']);
         // Optionally deduct amount from card balance here if needed
         $voyage = \App\Models\Voyage::create($data);
