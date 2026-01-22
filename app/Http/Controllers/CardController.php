@@ -221,6 +221,7 @@ public function clientSoldeByUid($nfc_uid)
         ],
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
+        'number_voyages' => $card->number_voyages,
         'cardId' => $card->id, // Add the card's ID
         'cardUuid' => $card->uuid, // Add the card's UUID
         'voyages' => $card->voyages,
