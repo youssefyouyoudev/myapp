@@ -26,24 +26,30 @@
         $now = now();
         $today = $now->toDateString();
 
+        // Count today's validations for this card (from validations table)
+        $todayValidations = \App\Models\Validation::where('card_id', $card->id)
+            ->whereDate('created_at', $today)
+            ->count();
+        if ($todayValidations >= 4) {
+            return response()->json([
+                'success' => false,
+                'reason' => 'Validation limit reached (4 per day)',
+            ], 403);
+        }
+
         // Check for active subscription
         $activeSubscription = $card->client && $card->client->subscriptions->first();
         if ($activeSubscription) {
-            // Count today's validations for this card (assuming a Voyage is created per validation)
-            $todayValidations = $card->voyages()->whereDate('created_at', $today)->count();
-            if ($todayValidations >= 4) {
-                return response()->json([
-                    'success' => false,
-                    'reason' => 'Subscription limit reached (4 per day)',
-                ], 403);
-            }
-            // Allow validation
-            // Optionally, create a Voyage record here if needed
+            // Store validation record
+            \App\Models\Validation::create([
+                'card_id' => $card->id,
+                'validated_at' => $now,
+            ]);
             return response()->json([
                 'success' => true,
                 'type' => 'subscription',
                 'message' => 'Validation allowed (subscription)',
-                'remaining' => 4 - $todayValidations,
+                'remaining' => 4 - ($todayValidations + 1),
             ]);
         }
 
@@ -61,6 +67,11 @@
                 $card->number_voyages -= 1;
                 $card->save();
             }
+            // Store validation record
+            \App\Models\Validation::create([
+                'card_id' => $card->id,
+                'validated_at' => $now,
+            ]);
             return response()->json([
                 'success' => true,
                 'type' => 'voyage',
@@ -187,6 +198,14 @@ public function clientSoldeByUid($nfc_uid)
 {
     // Find the card by its NFC UID, and load the client relationship
     $card = \App\Models\Card::with(['client', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
+    // Get last 5 validations for this card
+    $lastValidations = [];
+    if ($card) {
+        $lastValidations = \App\Models\Validation::where('card_id', $card->id)
+            ->orderByDesc('validated_at')
+            ->limit(5)
+            ->get(['id', 'validated_at', 'created_at']);
+    }
 
     // If the card or the client link doesn't exist, return a clear "not linked" response
     if (!$card || !$card->client) {
@@ -199,6 +218,7 @@ public function clientSoldeByUid($nfc_uid)
             'cardUuid' => $nfc_uid,
             'voyages' => $card ? $card->voyages : [],
             'subscriptions' => $card ? $card->subscriptions : [],
+            'lastValidations' => $lastValidations,
         ]);
     }
 
@@ -226,6 +246,7 @@ public function clientSoldeByUid($nfc_uid)
         'cardUuid' => $card->uuid, // Add the card's UUID
         'voyages' => $card->voyages,
         'subscriptions' => $card->subscriptions,
+        'lastValidations' => $lastValidations,
     ]);
 }
             public function chargeVoyage(\Illuminate\Http\Request $request, $cardId)
