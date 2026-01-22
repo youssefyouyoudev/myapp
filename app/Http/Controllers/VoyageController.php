@@ -43,12 +43,28 @@ class VoyageController extends Controller
         $data['card_id'] = $card->id;
         $data['client_id'] = $card->client_id;
         $data['scanned_at'] = now();
-        // get number of voyages from voyage plan, fallback to 1 if not found
-        $voyagePlan = \App\Models\VoyagePlan::find($data['voyage_plan_id']);
-        $data['number_voyages'] = ($voyagePlan && is_numeric($voyagePlan->number_voyages)) ? (int)$voyagePlan->number_voyages : 1;
+        // Get number_voyages directly from request, fallback to 1 if not set
+        $newNumberVoyages = isset($data['number_voyages']) && is_numeric($data['number_voyages']) ? (int)$data['number_voyages'] : 1;
         unset($data['card_uuid']);
-        // Optionally deduct amount from card balance here if needed
-        $voyage = \App\Models\Voyage::create($data);
+
+        // Check if a voyage exists for this card and plan (recharge)
+        $voyage = \App\Models\Voyage::where('card_id', $card->id)
+            ->where('voyage_plan_id', $data['voyage_plan_id'])
+            ->orderByDesc('id')
+            ->first();
+
+        if ($voyage) {
+            // Update number_voyages by adding the new one
+            $voyage->number_voyages += $newNumberVoyages;
+            $voyage->save();
+            $action = 'recharged_existing_voyage';
+        } else {
+            // Create new voyage
+            $data['number_voyages'] = $newNumberVoyages;
+            $voyage = \App\Models\Voyage::create($data);
+            $action = 'created_new_voyage';
+        }
+
         // Store payment record
         \App\Models\Payment::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
@@ -59,7 +75,7 @@ class VoyageController extends Controller
             'method' => 'espece',
             'reference' => null,
         ]);
-        $this->logUserAction('charge_voyage', 'Voyage', $voyage->id, [
+        $this->logUserAction($action, 'Voyage', $voyage->id, [
             'request' => $request->all(),
             'voyage_id' => $voyage->id,
         ]);
@@ -72,6 +88,7 @@ class VoyageController extends Controller
                 'amount' => (float)$voyage->amount,
                 'card_id' => $card->id,
                 'scanned_at' => $voyage->scanned_at,
+                'number_voyages' => $voyage->number_voyages,
             ],
             'card' => [
                 'id' => $card->id,
