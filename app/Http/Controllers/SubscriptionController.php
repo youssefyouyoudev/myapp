@@ -51,7 +51,7 @@ class SubscriptionController extends Controller
         // Store payment record
         \App\Models\Payment::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'user_id' => $request->user() ? $request->user()->id : 0,
+            'user_id' => $request->user_id ?? null,
             'client_id' => $subscription->client_id,
             'card_id' => $subscription->card_id,
             'amount' => $subscription->price,
