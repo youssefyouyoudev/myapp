@@ -43,9 +43,9 @@ class VoyageController extends Controller
         $data['card_id'] = $card->id;
         $data['client_id'] = $card->client_id;
         $data['scanned_at'] = now();
-        //get number of voyages from voyage plan
+        // get number of voyages from voyage plan, fallback to 1 if not found
         $voyagePlan = \App\Models\VoyagePlan::find($data['voyage_plan_id']);
-        $data['number_voyages'] = $voyagePlan ? $voyagePlan->number_voyages : 0;
+        $data['number_voyages'] = ($voyagePlan && is_numeric($voyagePlan->number_voyages)) ? (int)$voyagePlan->number_voyages : 1;
         unset($data['card_uuid']);
         // Optionally deduct amount from card balance here if needed
         $voyage = \App\Models\Voyage::create($data);
