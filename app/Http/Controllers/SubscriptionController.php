@@ -13,11 +13,6 @@ use Illuminate\Support\Facades\Log;
 class SubscriptionController extends Controller
 {
         public function charge($clientId, \Illuminate\Http\Request $request)
-            // ...existing code...
-            $this->logUserAction('charge_subscription', 'Subscription', $subscription->id, [
-                'request' => $request->all(),
-                'subscription_id' => $subscription->id,
-            ]);
     {
         try {
             $validated = $request->validate([
@@ -54,6 +49,10 @@ class SubscriptionController extends Controller
                 'amount' => $subscription->price,
                 'method' => 'espece',
                 'reference' => null,
+            ]);
+            $this->logUserAction('charge_subscription', 'Subscription', $subscription->id, [
+                'request' => $request->all(),
+                'subscription_id' => $subscription->id,
             ]);
             // Optionally deduct price from card balance here if needed
             return response()->json([
@@ -95,11 +94,6 @@ class SubscriptionController extends Controller
     }
 
     public function store(StoreSubscriptionRequest $request)
-            // ...existing code...
-            $this->logUserAction('create_subscription', 'Subscription', $subscription->id, [
-                'request' => $request->all(),
-                'subscription_id' => $subscription->id,
-            ]);
     {
         $data = $request->validated();
         // Always set card_id and client_id
@@ -115,6 +109,10 @@ class SubscriptionController extends Controller
             abort(422, 'card_uuid or card_id is required');
         }
         $subscription = Subscription::create($data);
+        $this->logUserAction('create_subscription', 'Subscription', $subscription->id, [
+            'request' => $request->all(),
+            'subscription_id' => $subscription->id,
+        ]);
         return new SubscriptionResource($subscription->load('client'));
     }
 
@@ -124,21 +122,19 @@ class SubscriptionController extends Controller
     }
 
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription)
-            // ...existing code...
-            $this->logUserAction('update_subscription', 'Subscription', $subscription->id, [
-                'request' => $request->all(),
-                'subscription_id' => $subscription->id,
-            ]);
     {
         $subscription->update($request->validated());
+        $this->logUserAction('update_subscription', 'Subscription', $subscription->id, [
+            'request' => $request->all(),
+            'subscription_id' => $subscription->id,
+        ]);
         return new SubscriptionResource($subscription->fresh()->load('client'));
     }
 
     public function destroy(Subscription $subscription)
-        // ...existing code...
-        $this->logUserAction('delete_subscription', 'Subscription', $subscription->id);
     {
         $subscription->delete();
+        $this->logUserAction('delete_subscription', 'Subscription', $subscription->id);
         return response()->json(['message' => 'Subscription deleted successfully']);
     }
 }

@@ -21,11 +21,6 @@ class VoyageController extends Controller
      * Charge a client for a voyage.
      */
     public function charge($clientId, \Illuminate\Http\Request $request)
-            // ...existing code...
-            $this->logUserAction('charge_voyage', 'Voyage', $voyage->id, [
-                'request' => $request->all(),
-                'voyage_id' => $voyage->id,
-            ]);
     {
         try {
             $validated = $request->validate([
@@ -60,6 +55,10 @@ class VoyageController extends Controller
             'method' => 'espece',
             'reference' => null,
         ]);
+        $this->logUserAction('charge_voyage', 'Voyage', $voyage->id, [
+            'request' => $request->all(),
+            'voyage_id' => $voyage->id,
+        ]);
         return response()->json([
             'message' => 'Client charged for voyage successfully.',
             'client_id' => $card->client_id,
@@ -84,12 +83,6 @@ class VoyageController extends Controller
     }
 
     public function store(StoreVoyageRequest $request)
-            // ...existing code...
-            // Log after successful voyage creation
-            // You may need to fetch the created voyage if needed
-            $this->logUserAction('create_voyage', 'Voyage', null, [
-                'request' => $request->all(),
-            ]);
     {
         $data = $request->validated();
         $card = Card::where('uuid', $data['card_uuid'])->firstOrFail();
@@ -132,6 +125,11 @@ class VoyageController extends Controller
                 'new_balance' => $card->balance,
                 'reason' => 'voyage',
                 'created_at' => now(),
+            ]);
+            // Log after successful voyage creation
+            $this->logUserAction('create_voyage', 'Voyage', $voyage->id, [
+                'request' => $data,
+                'voyage_id' => $voyage->id,
             ]);
         });
         return response()->json(['message' => 'Voyage recorded successfully']);
