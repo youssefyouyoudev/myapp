@@ -21,85 +21,88 @@ class VoyageController extends Controller
      * Charge a client for a voyage.
      */
     public function charge($clientId, \Illuminate\Http\Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                // 'uuid' => 'required|uuid|unique:voyages,uuid',
-                'voyage_plan_id' => 'required|exists:voyage_plans,id',
-                'card_uuid' => 'required|exists:cards,uuid',
-                'amount' => 'required|numeric',
-                'note' => 'nullable|string',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error in voyage charge:', [
-                'errors' => $e->errors(),
-                'input' => $request->all()
-            ]);
-            return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
-        }
-        $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
-        $data = $validated;
-        $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
-        $data['card_id'] = $card->id;
-        $data['client_id'] = $card->client_id;
-        $data['scanned_at'] = now();
-        // Get number_voyages directly from request, fallback to 1 if not set
-        $newNumberVoyages = isset($data['number_voyages']) && is_numeric($data['number_voyages']) ? (int)$data['number_voyages'] : 1;
-        unset($data['card_uuid']);
-
-        // Check if a voyage exists for this card and plan (recharge)
-        $voyage = \App\Models\Voyage::where('card_id', $card->id)
-            ->where('voyage_plan_id', $data['voyage_plan_id'])
-            ->orderByDesc('id')
-            ->first();
-
-        if ($voyage) {
-            // Update number_voyages by adding the new one
-            $voyage->number_voyages += $newNumberVoyages;
-            $voyage->save();
-            $action = 'recharged_existing_voyage';
-        } else {
-            // Create new voyage
-            $data['number_voyages'] = $newNumberVoyages;
-            $voyage = \App\Models\Voyage::create($data);
-            $action = 'created_new_voyage';
-        }
-        // Update card's number_voyages
-        $card->number_voyages += $newNumberVoyages;
-        $card->save();
-
-        // Store payment record
-        \App\Models\Payment::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'user_id' => $request->user_id ?? null,
-            'client_id' => $card->client_id,
-            'card_id' => $card->id,
-            'amount' => $voyage->amount,
-            'method' => 'espece',
-            'reference' => null,
+{
+    try {
+        // 1. Added 'number_of_voyages' to validation rules.
+        $validated = $request->validate([
+            'voyage_plan_id' => 'required|exists:voyage_plans,id',
+            'card_uuid' => 'required|exists:cards,uuid',
+            'amount' => 'required|numeric',
+            'note' => 'nullable|string',
+            'number_of_voyages' => 'required|integer|min:1',
         ]);
-        $this->logUserAction($action, 'Voyage', $voyage->id, [
-            'request' => $request->all(),
-            'voyage_id' => $voyage->id,
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error in voyage charge:', [
+            'errors' => $e->errors(),
+            'input' => $request->all()
         ]);
-        return response()->json([
-            'message' => 'Client charged for voyage successfully.',
-            'client_id' => $card->client_id,
-            'voyage' => [
-                'id' => $voyage->id,
-                'plan' => $voyage->plan->name ?? null,
-                'amount' => (float)$voyage->amount,
-                'card_id' => $card->id,
-                'scanned_at' => $voyage->scanned_at,
-                'number_voyages' => $voyage->number_voyages,
-            ],
-            'card' => [
-                'id' => $card->id,
-                'nfc_uid' => $card->nfc_uid,
-                'balance' => (float)$card->balance,
-            ],
-        ]);
+        return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
     }
+    $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
+    $data = $validated;
+    $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
+    $data['card_id'] = $card->id;
+    $data['client_id'] = $card->client_id;
+    $data['scanned_at'] = now();
+
+    // 2. Get the value from the validated data.
+    $newNumberVoyages = (int)$data['number_of_voyages'];
+    unset($data['card_uuid']);
+
+    // 3. Changed 'number_voyages' to 'number_of_voyages' everywhere below.
+    $voyage = \App\Models\Voyage::where('card_id', $card->id)
+        ->where('voyage_plan_id', $data['voyage_plan_id'])
+        ->orderByDesc('id')
+        ->first();
+
+    if ($voyage) {
+        // Assumes the DB column is 'number_of_voyages'
+        $voyage->number_of_voyages += $newNumberVoyages;
+        $voyage->save();
+        $action = 'recharged_existing_voyage';
+    } else {
+        // 'number_of_voyages' is already in $data from validation
+        $voyage = \App\Models\Voyage::create($data);
+        $action = 'created_new_voyage';
+    }
+
+    // Assumes the DB column is 'number_of_voyages'
+    $card->number_of_voyages += $newNumberVoyages;
+    $card->save();
+
+    \App\Models\Payment::create([
+        'uuid' => (string) \Illuminate\Support\Str::uuid(),
+        'user_id' => $request->user_id ?? null,
+        'client_id' => $card->client_id,
+        'card_id' => $card->id,
+        'amount' => $voyage->amount,
+        'method' => 'espece',
+        'reference' => null,
+    ]);
+    $this->logUserAction($action, 'Voyage', $voyage->id, [
+        'request' => $request->all(),
+        'voyage_id' => $voyage->id,
+    ]);
+    return response()->json([
+        'message' => 'Client charged for voyage successfully.',
+        'client_id' => $card->client_id,
+        'voyage' => [
+            'id' => $voyage->id,
+            'plan' => $voyage->plan->name ?? null,
+            'amount' => (float)$voyage->amount,
+            'card_id' => $card->id,
+            'scanned_at' => $voyage->scanned_at,
+            'number_of_voyages' => $voyage->number_of_voyages,
+        ],
+        'card' => [
+            'id' => $card->id,
+            'nfc_uid' => $card->nfc_uid,
+            'balance' => (float)$card->balance,
+            // also updated here for consistency in the response
+            'number_of_voyages' => $card->number_of_voyages,
+        ],
+    ]);
+}
     public function index()
     {
         $voyages = Voyage::with('card')->paginate(20);
