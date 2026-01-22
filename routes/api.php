@@ -19,6 +19,8 @@ Route::middleware('auth:sanctum')->group(function () {
 	// Auth
 	Route::post('logout', [AuthController::class, 'logout']);
 	Route::get('me', [AuthController::class, 'me']);
+    //get user info
+    Route::get('users/me', [AuthController::class, 'me']);
 
 	// User stats/reporting
 	Route::get('users/me/stats', [UserStatsController::class, 'stats']);
