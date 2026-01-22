@@ -24,59 +24,64 @@ class SubscriptionController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'note' => 'nullable|string',
             ]);
+            $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
+            $data = $validated;
+            $data['card_id'] = $card->id;
+            $data['client_id'] = $card->client_id;
+            $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
+            unset($data['card_uuid']);
+            // Check for existing active subscription for this card/client
+            $subscription = \App\Models\Subscription::where('client_id', $data['client_id'])
+                ->where('card_id', $data['card_id'])
+                ->where('status', 'active')
+                ->first();
+            if ($subscription) {
+                $subscription->update($data);
+            } else {
+                $subscription = \App\Models\Subscription::create($data);
+            }
+            // Store payment record
+            \App\Models\Payment::create([
+                'uuid' => (string) \Illuminate\Support\Str::uuid(),
+                'user_id' => $request->user_id ?? null,
+                'client_id' => $subscription->client_id,
+                'card_id' => $subscription->card_id,
+                'amount' => $subscription->price,
+                'method' => 'espece',
+                'reference' => null,
+            ]);
+            // Optionally deduct price from card balance here if needed
+            return response()->json([
+                'message' => 'Client charged for subscription (monthly) successfully.',
+                'client_id' => $subscription->client_id,
+                'subscription' => [
+                    'id' => $subscription->id,
+                    'plan' => $subscription->plan->name ?? null,
+                    'price' => (float)$subscription->price,
+                    'start_date' => $subscription->start_date,
+                    'end_date' => $subscription->end_date,
+                    'card_id' => $card->id,
+                    'created_at' => $subscription->created_at,
+                ],
+                'card' => [
+                    'id' => $card->id,
+                    'nfc_uid' => $card->nfc_uid,
+                    'balance' => (float)$card->balance,
+                ],
+            ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error in charge:', [
                 'errors' => $e->errors(),
                 'input' => $request->all()
             ]);
             return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error 500 in charge:', [
+                'exception' => $e->getMessage(),
+                'input' => $request->all()
+            ]);
+            return response()->json(['message' => 'Internal server error'], 500);
         }
-        $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
-        $data = $validated;
-        $data['card_id'] = $card->id;
-        $data['uuid'] = $card->uuid;
-        $data['client_id'] = $card->client_id;
-
-        unset($data['card_uuid']);
-        // Check for existing active subscription for this card/client
-        $subscription = \App\Models\Subscription::where('client_id', $data['client_id'])
-            ->where('card_id', $data['card_id'])
-            ->where('status', 'active')
-            ->first();
-        if ($subscription) {
-            $subscription->update($data);
-        } else {
-            $subscription = \App\Models\Subscription::create($data);
-        }
-        // Store payment record
-        \App\Models\Payment::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'user_id' => $request->user_id ?? null,
-            'client_id' => $subscription->client_id,
-            'card_id' => $subscription->card_id,
-            'amount' => $subscription->price,
-            'method' => 'espece',
-            'reference' => null,
-        ]);
-        // Optionally deduct price from card balance here if needed
-        return response()->json([
-            'message' => 'Client charged for subscription (monthly) successfully.',
-            'client_id' => $subscription->client_id,
-            'subscription' => [
-                'id' => $subscription->id,
-                'plan' => $subscription->plan->name ?? null,
-                'price' => (float)$subscription->price,
-                'start_date' => $subscription->start_date,
-                'end_date' => $subscription->end_date,
-                'card_id' => $card->id,
-                'created_at' => $subscription->created_at,
-            ],
-            'card' => [
-                'id' => $card->id,
-                'nfc_uid' => $card->nfc_uid,
-                'balance' => (float)$card->balance,
-            ],
-        ]);
     }
     public function index()
     {

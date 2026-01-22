@@ -39,7 +39,7 @@ class VoyageController extends Controller
         }
         $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
         $data = $validated;
-        $data['uuid'] = $card->uuid;
+        $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
         $data['card_id'] = $card->id;
         $data['client_id'] = $card->client_id;
         unset($data['card_uuid']);
@@ -48,7 +48,7 @@ class VoyageController extends Controller
         // Store payment record
         \App\Models\Payment::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
-           'user_id' => $request->user_id ?? null,
+            'user_id' => $request->user_id ?? null,
             'client_id' => $voyage->client_id,
             'card_id' => $voyage->card_id,
             'amount' => $voyage->amount,
