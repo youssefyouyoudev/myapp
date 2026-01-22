@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->foreignId('card_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
-            $table->enum('method', ['cash', 'card', 'mobile']);
+            $table->enum('method', ['cash', 'card', 'mobile', 'espece']);
             $table->string('reference')->nullable();
             $table->timestamps();
         });
