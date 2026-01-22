@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        \App\Models\Client::factory(10)->create();
 
         User::factory()->create([
             'name' => 'Test User',
@@ -37,5 +36,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'agent',
             'password' => bcrypt('password'),
         ]);
+        \App\Models\Client::factory(10)->create();
     }
+
 }

@@ -20,6 +20,7 @@ class ClientFactory extends Factory
             'cin' => strtoupper(Str::random(8)),
             'date_of_birth' => $this->faker->date('Y-m-d', '-18 years'),
             'school' => $this->faker->company(),
+            'user_id' => 2,
         ];
     }
 }
