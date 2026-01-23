@@ -13,12 +13,34 @@ class StoreClientRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'full_name' => 'required|string|max:255',
-            'cin' => 'required|string|max:50|unique:clients,cin',
-            'date_of_birth' => 'required|date',
-            'school' => 'required|string|max:255',
-            'status' => 'nullable|in:active,suspended',
-        ];
+            return [
+                'user_id' => 'required|exists:users,id',
+                'full_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:255',
+                'status' => 'required|in:active,suspended',
+                'cin' => 'required|string|max:255|unique:etudiants,cin',
+                'date_of_birth' => 'required|date',
+                'school' => 'required|string|max:255',
+            ];
     }
 }
+    class StoreEtudiantRequest extends FormRequest
+    {
+        public function authorize()
+        {
+            return true;
+        }
+
+        public function rules()
+        {
+            return [
+                'user_id' => 'required|exists:users,id',
+                'full_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:255',
+                'status' => 'required|in:active,suspended',
+                'cin' => 'required|string|max:255|unique:etudiants,cin',
+                'date_of_birth' => 'required|date',
+                'school' => 'required|string|max:255',
+            ];
+        }
+    }

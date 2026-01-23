@@ -16,7 +16,7 @@ class Payment extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Etudiant::class);
     }
 
     public function card(): BelongsTo

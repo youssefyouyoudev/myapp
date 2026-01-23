@@ -13,14 +13,14 @@ class ClientFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => null, // Set in seeder if needed
-            'full_name' => $this->faker->name(),
-            'phone' => $this->faker->phoneNumber(),
-            'status' => "active",
-            'cin' => strtoupper(Str::random(8)),
-            'date_of_birth' => $this->faker->date('Y-m-d', '-18 years'),
-            'school' => $this->faker->company(),
-            'user_id' => 2,
+          'user_id' => \App\Models\User::factory(),
+          'full_name' => $this->faker->name(),
+          'phone' => $this->faker->phoneNumber(),
+          'status' => $this->faker->randomElement(['active', 'suspended']),
+          'cin' => $this->faker->unique()->bothify('??######'),
+          'date_of_birth' => $this->faker->date(),
+          'school' => $this->faker->company(),
+          'user_id' => 2,
         ];
     }
 }

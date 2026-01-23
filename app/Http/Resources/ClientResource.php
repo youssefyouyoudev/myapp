@@ -10,14 +10,14 @@ class ClientResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'uuid' => $this->uuid,
-            'fullName' => $this->full_name,
-            'cin' => $this->cin,
-            'dateOfBirth' => $this->date_of_birth,
-            'school' => $this->school,
-            'status' => $this->status,
-            'createdAt' => $this->created_at,
-            'updatedAt' => $this->updated_at,
+                'id' => $this->id,
+                'user_id' => $this->user_id,
+                'full_name' => $this->full_name,
+                'phone' => $this->phone,
+                'status' => $this->status,
+                'cin' => $this->cin,
+                'date_of_birth' => $this->date_of_birth,
+                'school' => $this->school,
         ];
     }
 }

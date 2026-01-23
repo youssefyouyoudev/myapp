@@ -27,7 +27,7 @@ class User extends Authenticatable
     ];
     public function client()
     {
-        return $this->hasOne(Client::class);
+        return $this->hasOne(Etudiant::class);
     }
 
     /**
@@ -52,5 +52,5 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    
+
 }
