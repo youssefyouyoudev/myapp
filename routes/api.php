@@ -39,27 +39,27 @@ Route::middleware('auth:sanctum')->group(function () {
 	// Voyage Plans CRUD
 	Route::apiResource('voyage-plans', App\Http\Controllers\VoyagePlanController::class);
 
-	// Clients (students)
-	Route::apiResource('clients', EtudiantController::class);
+	// Etudiants (students)
+	Route::apiResource('etudiants', EtudiantController::class);
 
 	// Cards
 	Route::apiResource('cards', CardController::class);
 	Route::post('cards/{card}/block', [CardController::class, 'block']);
 	Route::post('cards/{card}/unblock', [CardController::class, 'unblock']);
-	// Update client linked to card
-	Route::put('cards/{card}/update-client', [CardController::class, 'updateClient']);
+	// Update etudiant linked to card
+	Route::put('cards/{card}/update-etudiant', [CardController::class, 'updateEtudiant']);
 	// Charge card for subscription or voyage (mutually exclusive)
 	Route::post('cards/{card}/charge-subscription', [CardController::class, 'chargeSubscription']);
 	Route::post('cards/{card}/charge-voyage', [CardController::class, 'chargeVoyage']);
 	// Card scan (NFC)
 	Route::get('cards/{nfc_uid}/scan', [CardController::class, 'scan']);
-	// Get client and card balance info by card NFC UID
-	Route::get('cards/{nfc_uid}/client-solde', [CardController::class, 'clientSoldeByUid']);
-	// Link card to client
-Route::post('cards/{nfcUid}/link', [CardController::class, 'linkToClient']);
+	// Get etudiant and card balance info by card NFC UID
+	Route::get('cards/{nfc_uid}/etudiant-solde', [CardController::class, 'etudiantSoldeByUid']);
+	// Link card to etudiant
+	Route::post('cards/{nfcUid}/link', [CardController::class, 'linkToEtudiant']);
 	// Charging endpoints (only one active plan at a time)
-	Route::post('clients/{client}/charge-subscription', [SubscriptionController::class, 'charge']);
-	Route::post('clients/{client}/charge-voyage', [VoyageController::class, 'charge']);
+	Route::post('etudiants/{etudiant}/charge-subscription', [SubscriptionController::class, 'charge']);
+	Route::post('etudiants/{etudiant}/charge-voyage', [VoyageController::class, 'charge']);
 
 	// Voyages (NFC scans)
 	Route::apiResource('voyages', VoyageController::class)->only(['index', 'store', 'show']);

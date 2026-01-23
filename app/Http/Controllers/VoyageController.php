@@ -18,9 +18,9 @@ class VoyageController extends Controller
 {
 
     /**
-     * Charge a client for a voyage.
+    * Charge an etudiant for a voyage.
      */
-    public function charge($clientId, \Illuminate\Http\Request $request)
+    public function charge($etudiantId, \Illuminate\Http\Request $request)
 {
     try {
         // 1. Added 'number_of_voyages' to validation rules.
@@ -42,7 +42,7 @@ class VoyageController extends Controller
     $data = $validated;
     $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
     $data['card_id'] = $card->id;
-    $data['client_id'] = $card->client_id;
+    $data['etudiant_id'] = $card->etudiant_id;
     $data['scanned_at'] = now();
 
     // 2. Get the value from the validated data.
@@ -73,7 +73,7 @@ class VoyageController extends Controller
     \App\Models\Payment::create([
         'uuid' => (string) \Illuminate\Support\Str::uuid(),
         'user_id' => $request->user_id ?? null,
-        'client_id' => $card->client_id,
+        'etudiant_id' => $card->etudiant_id,
         'card_id' => $card->id,
         'amount' => $voyage->amount,
         'method' => 'espece',
@@ -84,8 +84,8 @@ class VoyageController extends Controller
         'voyage_id' => $voyage->id,
     ]);
     return response()->json([
-        'message' => 'Client charged for voyage successfully.',
-        'client_id' => $card->client_id,
+        'message' => 'Etudiant charged for voyage successfully.',
+        'etudiant_id' => $card->etudiant_id,
         'voyage' => [
             'id' => $voyage->id,
             'plan' => $voyage->plan->name ?? null,
@@ -121,7 +121,7 @@ class VoyageController extends Controller
         }
 
         // Check subscription
-        $subscription = $card->client->subscriptions()->where('status', 'active')
+        $subscription = $card->etudiant->subscriptions()->where('status', 'active')
             ->where('start_date', '<=', Carbon::now())
             ->where('end_date', '>=', Carbon::now())
             ->first();
@@ -141,7 +141,7 @@ class VoyageController extends Controller
             $voyage = Voyage::create([
                 'uuid' => $data['uuid'], // Use uuid from request (NFC)
                 'card_id' => $card->id,
-                'client_id' => $card->client_id,
+                'etudiant_id' => $card->etudiant_id,
                 'voyage_plan_id' => $data['voyage_plan_id'] ?? null,
                 'amount' => $amount,
                 'scanned_at' => now(),

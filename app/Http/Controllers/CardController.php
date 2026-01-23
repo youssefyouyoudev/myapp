@@ -11,24 +11,24 @@
 
     class CardController extends Controller{
         /**
-         * Update the client linked to a card.
+         * Update the etudiant linked to a card.
          * @param \Illuminate\Http\Request $request
          * @param int $cardId
          * @return \Illuminate\Http\JsonResponse
          */
-        public function updateClient(Request $request, $cardId)
+        public function updateEtudiant(Request $request, $cardId)
         {
             $request->validate([
                 'etudiant_id' => 'required|exists:etudiants,id',
             ]);
             $card = Card::findOrFail($cardId);
-            $client = \App\Models\Etudiant::findOrFail($request->etudiant_id);
-            $card->etudiant_id = $client->id;
+            $etudiant = \App\Models\Etudiant::findOrFail($request->etudiant_id);
+            $card->etudiant_id = $etudiant->id;
             $card->save();
             return response()->json([
-                'message' => 'Client updated for card successfully.',
-                'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds'])),
-                'client' => $client,
+                'message' => 'Etudiant updated for card successfully.',
+                'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['etudiant', 'voyages', 'cardSolds'])),
+                'etudiant' => $etudiant,
             ]);
         }
     /**
@@ -39,7 +39,7 @@
      */
      function validateCard($cardId)
     {
-        $card = Card::with(['client.subscriptions' => function($q) {
+        $card = Card::with(['etudiant.subscriptions' => function($q) {
             $q->where('status', 'active')
               ->where('start_date', '<=', now())
               ->where('end_date', '>=', now());
@@ -60,7 +60,7 @@
         }
 
         // Check for active subscription
-        $activeSubscription = $card->client && $card->client->subscriptions->first();
+        $activeSubscription = $card->etudiant && $card->etudiant->subscriptions->first();
         if ($activeSubscription) {
             // Store validation record
             \App\Models\Validation::create([
@@ -110,7 +110,7 @@
 
     public function index()
     {
-        $cards = Card::with('client', 'voyages', 'cardSolds')->paginate(20);
+        $cards = Card::with('etudiant', 'voyages', 'cardSolds')->paginate(20);
         return response()->json([
             'data' => CardResource::collection($cards),
             'meta' => [
@@ -128,7 +128,7 @@
         $data['uuid'] = (string) Str::uuid();
         $card = Card::create($data);
         return response()->json([
-            'data' => new CardResource($card->load(['client', 'voyages', 'cardSolds']))
+            'data' => new CardResource($card->load(['etudiant', 'voyages', 'cardSolds']))
         ], 201);
     }
 
@@ -143,7 +143,7 @@
     {
         $card->update($request->validated());
         return response()->json([
-            'data' => new CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds']))
+            'data' => new CardResource($card->fresh()->load(['etudiant', 'voyages', 'cardSolds']))
         ]);
     }
 
@@ -169,13 +169,13 @@
         ]);
     }
     /**
-     * Link a card to a client and return both card and client info.
+    * Link a card to an etudiant and return both card and etudiant info.
      */
-    public function linkToClient(\Illuminate\Http\Request $request, $nfcUid)
+    public function linkToEtudiant(\Illuminate\Http\Request $request, $nfcUid)
 {
-    // 1. Validate that the client_id exists.
+    // 1. Validate that the etudiant_id exists.
     $request->validate([
-        'client_id' => 'required|exists:clients,id',
+        'etudiant_id' => 'required|exists:etudiants,id',
     ]);
 
     // 2. Find a card by its nfc_uid, or prepare to create a new one.
@@ -198,28 +198,28 @@
     }
 
     // 4. Find the client and link it to the card.
-    $client = \App\Models\Etudiant::findOrFail($request->client_id);
-    $card->etudiant_id = $client->id;
+    $etudiant = \App\Models\Etudiant::findOrFail($request->etudiant_id);
+    $card->etudiant_id = $etudiant->id;
 
     // 5. Save the card. This will either INSERT a new card or UPDATE the existing one.
     $card->save();
 
     // 6. Return a success response.
     return response()->json([
-        'message' => 'Card linked to client successfully.',
-        'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['client', 'voyages', 'cardSolds'])),
-        'client' => $client,
+        'message' => 'Card linked to etudiant successfully.',
+        'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['etudiant', 'voyages', 'cardSolds'])),
+        'etudiant' => $etudiant,
     ]);
 }
             /**
-             * Get client info and card balance by NFC UID.
+             * Get etudiant info and card balance by NFC UID.
              */
-// In your Laravel Controller for the client-solde endpoint
+// In your Laravel Controller for the etudiant-solde endpoint
 
-public function clientSoldeByUid($nfc_uid)
+public function etudiantSoldeByUid($nfc_uid)
 {
-    // Find the card by its NFC UID, and load the client relationship
-    $card = \App\Models\Card::with(['client', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
+    // Find the card by its NFC UID, and load the etudiant relationship
+    $card = \App\Models\Card::with(['etudiant', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
     // Get last 5 validations for this card
     $lastValidations = [];
     if ($card) {
@@ -229,11 +229,11 @@ public function clientSoldeByUid($nfc_uid)
             ->get(['id', 'validated_at', 'created_at']);
     }
 
-    // If the card or the client link doesn't exist, return a clear "not linked" response
-    if (!$card || !$card->client) {
+    // If the card or the etudiant link doesn't exist, return a clear "not linked" response
+    if (!$card || !$card->etudiant) {
         return response()->json([
             'isLinked' => false,
-            'client' => null,
+            'etudiant' => null,
             'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
             'cardId' => $card ? $card->id : null,
@@ -244,22 +244,22 @@ public function clientSoldeByUid($nfc_uid)
         ]);
     }
 
-    $client = $card->client;
+    $etudiant = $card->etudiant;
 
     return response()->json([
         'isLinked' => true,
-        'client' => [
-            'id' => $client->id, // Essential: Include the client ID
-            'user_id' => $client->user_id,
-            'full_name' => $client->full_name,
-            'phone' => $client->phone,
-            'email' => $client->email,
-            'status' => $client->status,
-            'cin' => $client->cin,
-            'date_of_birth' => $client->date_of_birth,
-            'school' => $client->school,
-            'created_at' => $client->created_at,
-            'updated_at' => $client->updated_at,
+        'etudiant' => [
+            'id' => $etudiant->id, // Essential: Include the etudiant ID
+            'user_id' => $etudiant->user_id,
+            'full_name' => $etudiant->full_name,
+            'phone' => $etudiant->phone,
+            'email' => $etudiant->email,
+            'status' => $etudiant->status,
+            'cin' => $etudiant->cin,
+            'date_of_birth' => $etudiant->date_of_birth,
+            'school' => $etudiant->school,
+            'created_at' => $etudiant->created_at,
+            'updated_at' => $etudiant->updated_at,
         ],
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
@@ -273,9 +273,9 @@ public function clientSoldeByUid($nfc_uid)
 }
             public function chargeVoyage(\Illuminate\Http\Request $request, $cardId)
             {
-                $card = Card::with('client.subscriptions')->findOrFail($cardId);
-                // If card's client has any active subscription, cannot charge for voyage
-                $hasActiveSubscription = $card->client && $card->client->subscriptions()->where('status', 'active')->exists();
+                $card = Card::with('etudiant.subscriptions')->findOrFail($cardId);
+                // If card's etudiant has any active subscription, cannot charge for voyage
+                $hasActiveSubscription = $card->etudiant && $card->etudiant->subscriptions()->where('status', 'active')->exists();
                 if ($hasActiveSubscription) {
                     return response()->json(['message' => 'Card already has active subscription. Cannot charge for voyage.'], 400);
                 }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Client;
+use App\Models\Etudiant;
 use App\Models\Card;
 use App\Models\Voyage;
 use App\Models\Payment;
@@ -25,7 +25,7 @@ class DashboardController extends Controller
             ],
             'stats' => [
                 'usersCount'        => User::count(),
-                'clientsCount'      => Client::count(),
+                'etudiantsCount'      => Etudiant::count(),
                 'cardsCount'        => Card::count(),
                 'voyagesCount'      => Voyage::count(),
                 'paymentsCount'     => Payment::count(),

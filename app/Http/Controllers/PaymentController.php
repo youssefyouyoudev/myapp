@@ -15,7 +15,7 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('client', 'card')->paginate(20);
+        $payments = Payment::with('etudiant', 'card')->paginate(20);
         return PaymentResource::collection($payments);
     }
 
@@ -30,7 +30,7 @@ class PaymentController extends Controller
             $card->save();
             $payment = Payment::create([
                 'uuid' => Str::uuid(),
-                'client_id' => $card->client_id,
+                'etudiant_id' => $card->etudiant_id,
                 'card_id' => $card->id,
                 'amount' => $amount,
                 'method' => $data['method'],
@@ -49,6 +49,6 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        return new PaymentResource($payment->load('client', 'card'));
+        return new PaymentResource($payment->load('etudiant', 'card'));
     }
 }

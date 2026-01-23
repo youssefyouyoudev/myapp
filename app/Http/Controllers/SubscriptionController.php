@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
-        public function charge($clientId, \Illuminate\Http\Request $request)
+        public function charge($etudiantId, \Illuminate\Http\Request $request)
     {
         try {
             $validated = $request->validate([
@@ -27,11 +27,11 @@ class SubscriptionController extends Controller
             $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
             $data = $validated;
             $data['card_id'] = $card->id;
-            $data['client_id'] = $card->client_id;
+            $data['etudiant_id'] = $card->etudiant_id;
             $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
             unset($data['card_uuid']);
-            // Check for existing active subscription for this card/client
-            $subscription = \App\Models\Subscription::where('client_id', $data['client_id'])
+            // Check for existing active subscription for this card/etudiant
+            $subscription = \App\Models\Subscription::where('etudiant_id', $data['etudiant_id'])
                 ->where('card_id', $data['card_id'])
                 ->where('status', 'active')
                 ->first();
@@ -44,7 +44,7 @@ class SubscriptionController extends Controller
             \App\Models\Payment::create([
                 'uuid' => (string) \Illuminate\Support\Str::uuid(),
                 'user_id' => $request->user_id ?? null,
-                'client_id' => $subscription->client_id,
+                'etudiant_id' => $subscription->etudiant_id,
                 'card_id' => $subscription->card_id,
                 'amount' => $subscription->price,
                 'method' => 'espece',
@@ -56,8 +56,8 @@ class SubscriptionController extends Controller
             ]);
             // Optionally deduct price from card balance here if needed
             return response()->json([
-                'message' => 'Client charged for subscription (monthly) successfully.',
-                'client_id' => $subscription->client_id,
+                'message' => 'Etudiant charged for subscription (monthly) successfully.',
+                'etudiant_id' => $subscription->etudiant_id,
                 'subscription' => [
                     'id' => $subscription->id,
                     'plan' => $subscription->plan->name ?? null,
@@ -89,22 +89,22 @@ class SubscriptionController extends Controller
     }
     public function index()
     {
-        $subscriptions = Subscription::with('client')->paginate(20);
+        $subscriptions = Subscription::with('etudiant')->paginate(20);
         return SubscriptionResource::collection($subscriptions);
     }
 
     public function store(StoreSubscriptionRequest $request)
     {
         $data = $request->validated();
-        // Always set card_id and client_id
+        // Always set card_id and etudiant_id
         if (isset($data['card_uuid'])) {
             $card = \App\Models\Card::where('uuid', $data['card_uuid'])->firstOrFail();
             $data['card_id'] = $card->id;
-            $data['client_id'] = $card->client_id;
+            $data['etudiant_id'] = $card->etudiant_id;
             unset($data['card_uuid']);
         } elseif (isset($data['card_id'])) {
             $card = \App\Models\Card::findOrFail($data['card_id']);
-            $data['client_id'] = $card->client_id;
+            $data['etudiant_id'] = $card->etudiant_id;
         } else {
             abort(422, 'card_uuid or card_id is required');
         }
@@ -113,12 +113,12 @@ class SubscriptionController extends Controller
             'request' => $request->all(),
             'subscription_id' => $subscription->id,
         ]);
-        return new SubscriptionResource($subscription->load('client'));
+        return new SubscriptionResource($subscription->load('etudiant'));
     }
 
     public function show(Subscription $subscription)
     {
-        return new SubscriptionResource($subscription->load('client'));
+        return new SubscriptionResource($subscription->load('etudiant'));
     }
 
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription)
@@ -128,7 +128,7 @@ class SubscriptionController extends Controller
             'request' => $request->all(),
             'subscription_id' => $subscription->id,
         ]);
-        return new SubscriptionResource($subscription->fresh()->load('client'));
+        return new SubscriptionResource($subscription->fresh()->load('etudiant'));
     }
 
     public function destroy(Subscription $subscription)

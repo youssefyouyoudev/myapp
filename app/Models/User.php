@@ -25,7 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
     ];
-    public function client()
+    public function etudiant()
     {
         return $this->hasOne(Etudiant::class);
     }
