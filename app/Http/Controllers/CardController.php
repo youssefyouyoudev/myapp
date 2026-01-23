@@ -198,8 +198,8 @@
     }
 
     // 4. Find the client and link it to the card.
-    $client = \App\Models\Client::findOrFail($request->client_id);
-    $card->client_id = $client->id;
+    $client = \App\Models\Etudiant::findOrFail($request->client_id);
+    $card->etudiant_id = $client->id;
 
     // 5. Save the card. This will either INSERT a new card or UPDATE the existing one.
     $card->save();
