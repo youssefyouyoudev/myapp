@@ -23,7 +23,7 @@
             ]);
             $card = Card::findOrFail($cardId);
             $client = \App\Models\Etudiant::findOrFail($request->client_id);
-            $card->client_id = $client->id;
+            $card->etudiant_id = $client->id;
             $card->save();
             return response()->json([
                 'message' => 'Client updated for card successfully.',
