@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserStatsController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EtudiantController;
 
 // Public routes
 Route::post('login', [AuthController::class, 'login']);
@@ -39,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::apiResource('voyage-plans', App\Http\Controllers\VoyagePlanController::class);
 
 	// Clients (students)
-	Route::apiResource('clients', ClientController::class);
+	Route::apiResource('clients', EtudiantController::class);
 
 	// Cards
 	Route::apiResource('cards', CardController::class);
