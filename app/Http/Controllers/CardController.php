@@ -22,7 +22,7 @@
                 'client_id' => 'required|exists:clients,id',
             ]);
             $card = Card::findOrFail($cardId);
-            $client = \App\Models\Etudiant::findOrFail($request->client_id);
+            $client = \App\Models\Etudiant::findOrFail($request->etudiant_id);
             $card->etudiant_id = $client->id;
             $card->save();
             return response()->json([
