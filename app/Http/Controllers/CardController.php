@@ -19,7 +19,7 @@
         public function updateClient(Request $request, $cardId)
         {
             $request->validate([
-                'client_id' => 'required|exists:clients,id',
+                'etudiant_id' => 'required|exists:etudiants,id',
             ]);
             $card = Card::findOrFail($cardId);
             $client = \App\Models\Etudiant::findOrFail($request->etudiant_id);
