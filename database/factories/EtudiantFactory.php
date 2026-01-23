@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Client>
  */
-class ClientFactory extends Factory
+class EtudiantFactory extends Factory
 {
     public function definition(): array
     {
