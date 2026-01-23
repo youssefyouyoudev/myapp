@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            $table->foreignId('etudiant_id')->constrained('etudiants')->onDelete('cascade');
             $table->foreignId('card_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->enum('method', ['cash', 'card', 'mobile', 'espece']);

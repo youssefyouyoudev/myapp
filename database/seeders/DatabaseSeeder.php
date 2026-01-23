@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'agent',
             'password' => bcrypt('password'),
         ]);
-        \App\Models\Client::factory(10)->create();
+        \App\Models\Etudiant::factory(10)->create();
     }
 
 }

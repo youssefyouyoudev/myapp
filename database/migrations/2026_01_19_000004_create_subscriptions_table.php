@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            $table->foreignId('etudiant_id')->constrained('etudiants')->onDelete('cascade');
             $table->foreignId('subscription_plan_id')->constrained('subscription_plans')->onDelete('cascade');
             $table->foreignId('card_id')->constrained('cards')->onDelete('cascade');
             $table->enum('type', ['weekly', 'monthly', 'yearly'])->nullable();

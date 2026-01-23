@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            $table->foreignId('etudiant_id')->constrained('etudiants')->onDelete('cascade');
             $table->string('nfc_uid')->unique();
             $table->decimal('balance', 10, 2)->default(0);
             $table->enum('status', ['active', 'blocked', 'expired', 'lost'])->default('active');
