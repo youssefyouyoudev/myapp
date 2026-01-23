@@ -50,7 +50,7 @@
 
         // Count today's validations for this card (from validations table)
         $todayValidations = \App\Models\Validation::where('card_id', $card->id)
-            ->whereDate('created_at', $today)
+            ->whereDate('validated_at', $today) // changed from created_at to validated_at
             ->count();
         if ($todayValidations >= 4) {
             return response()->json([
