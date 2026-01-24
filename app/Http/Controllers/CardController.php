@@ -6,7 +6,8 @@
         use App\Http\Requests\StoreCardRequest;
         use App\Http\Requests\UpdateCardRequest;
         use App\Http\Resources\CardResource;
-        use Illuminate\Support\Str;
+use App\Models\Etudiant;
+use Illuminate\Support\Str;
         use Illuminate\Http\Request;
 
     class CardController extends Controller{
@@ -219,7 +220,7 @@
 public function etudiantSoldeByUid($nfc_uid)
 {
     // Find the card by its NFC UID, and load the etudiant relationship
-    $card = \App\Models\Card::with(['etudiant', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
+    $card = \App\Models\Card::with(['etudiants', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
     // Get last 5 validations for this card
     $lastValidations = [];
     if ($card) {
@@ -228,11 +229,12 @@ public function etudiantSoldeByUid($nfc_uid)
             ->limit(5)
             ->get(['id', 'validated_at', 'created_at']);
     }
-
+$etudiant=Etudiant::find($card->etudiant_id);
     // If the card or the etudiant link doesn't exist, return a clear "not linked" response
-    if (!$card || !$card->etudiant) {
+    if (!$card || !$etudiant) {
         return response()->json([
             'isLinked' => false,
+        "cardetudiant_id" => $card->etudiant_id,
             'etudiant' => null,
             'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
@@ -244,11 +246,13 @@ public function etudiantSoldeByUid($nfc_uid)
         ]);
     }
 
-    $etudiant = $card->etudiant;
+    // $etudiant = $card->etudiants;
 
     return response()->json([
         'isLinked' => true,
+        // "cardetudiant_id" => $card->etudiant_id,
         'etudiant' => [
+
             'id' => $etudiant->id,
             'user_id' => $etudiant->user_id,
             'nom' => $etudiant->nom,

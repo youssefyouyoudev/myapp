@@ -35,16 +35,16 @@ class Etudiant extends Model
         });
     }
 
- 
+
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function cards(): HasMany
+    public function card(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasMany(Card::class);
+        return $this->hasOne(Card::class);
     }
 
     public function payments(): HasMany
