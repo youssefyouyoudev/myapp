@@ -87,9 +87,14 @@ class VoyageController extends Controller
         'request' => $request->all(),
         'voyage_id' => $voyage->id,
     ]);
+    // Fetch etudiant as array (not Eloquent model)
+    $etudiant = null;
+    if ($card->etudiant_id) {
+        $etudiant = \App\Models\Etudiant::find($card->etudiant_id);
+    }
     return response()->json([
         'message' => 'Etudiant charged for voyage successfully.',
-        'etudiant_id' => $card->etudiant_id,
+        'etudiant' => $etudiant,
         'voyage' => [
             'id' => $voyage->id,
             'plan' => $voyage->plan->name ?? null,
@@ -102,7 +107,6 @@ class VoyageController extends Controller
             'id' => $card->id,
             'nfc_uid' => $card->nfc_uid,
             'balance' => (float)$card->balance,
-            // also updated here for consistency in the response
             'number_of_voyages' => $card->number_voyages,
         ],
     ]);

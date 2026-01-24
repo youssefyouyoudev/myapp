@@ -44,7 +44,7 @@ class SubscriptionController extends Controller
             \App\Models\Payment::create([
                 'uuid' => (string) \Illuminate\Support\Str::uuid(),
                 'user_id' => $request->user_id ?? null,
-                'etudiant_id' => $subscription->etudiant_id,
+                'etudiant_id' => $card->etudiant_id,
                 'card_id' => $subscription->card_id,
                 'amount' => $subscription->price,
                 'method' => 'espece',
@@ -55,10 +55,14 @@ class SubscriptionController extends Controller
                 'subscription_id' => $subscription->id,
             ]);
             // Optionally deduct price from card balance here if needed
-            $subscription->load('etudiant');
+            // Fetch etudiant as array (not Eloquent model)
+            $etudiant = null;
+            if ($card->etudiant_id) {
+                $etudiant = \App\Models\Etudiant::find($card->etudiant_id);
+            }
             return response()->json([
                 'message' => 'Etudiant charged for subscription (monthly) successfully.',
-                'etudiant' => $subscription->etudiant,
+                'etudiant' => $etudiant,
                 'subscription' => [
                     'id' => $subscription->id,
                     'plan' => $subscription->plan->name ?? null,
