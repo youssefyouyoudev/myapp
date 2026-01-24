@@ -31,7 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	// User stats/reporting
 	Route::get('users/me/stats', [UserStatsController::class, 'stats']);
-	Route::get('users', [AuthController::class, 'getAllUsers']);
+	// User CRUD
+	Route::apiResource('users', App\Http\Controllers\UserController::class);
 
 	// Subscription Plans CRUD
 	Route::apiResource('subscription-plans', App\Http\Controllers\SubscriptionPlanController::class);

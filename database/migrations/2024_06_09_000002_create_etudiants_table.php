@@ -12,12 +12,18 @@ return new class extends Migration
             Schema::create('etudiants', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
-                $table->string('full_name');
-                $table->string('phone');
-                $table->enum('status', ['active', 'suspended'])->default('active');
-                $table->string('cin')->unique();
-                $table->date('date_of_birth');
-                $table->string('school');
+                $table->string('nom');
+                $table->string('prenom');
+                $table->string('etablissement');
+                $table->string('email')->unique();
+                $table->string('telephone');
+                $table->string('adresse')->nullable();
+                $table->string('carte_nationale')->unique();
+                $table->string('carte_etudiant')->nullable();
+                $table->string('img_user')->nullable();
+                $table->string('img_carte_nationale')->nullable();
+                $table->string('img_carte_nationale_verso')->nullable();
+                $table->string('img_carte_etudiant')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
 
