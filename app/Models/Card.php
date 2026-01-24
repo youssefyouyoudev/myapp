@@ -21,7 +21,7 @@ class Card extends Model
         return $this->hasMany(\App\Models\Subscription::class);
     }
 
-    public function etudiant(): BelongsTo
+    public function etudiants(): BelongsTo
     {
         return $this->belongsTo(Etudiant::class);
     }
