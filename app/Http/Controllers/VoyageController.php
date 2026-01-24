@@ -1,6 +1,29 @@
 <?php
 
+namespace App\Http\Controllers;
+
+use App\Models\Voyage;
+use App\Models\Card;
+use App\Models\CardSold;
+use App\Models\Subscription;
+use App\Http\Requests\StoreVoyageRequest;
+use App\Http\Resources\VoyageResource;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class VoyageController extends Controller
+{
+
+    /**
+    * Charge an etudiant for a voyage.
+     */
+    public function charge($etudiantId, \Illuminate\Http\Request $request)
+{
     try {
+        // 1. Added 'number_of_voyages' to validation rules.
         $validated = $request->validate([
             'voyage_plan_id' => 'required|exists:voyage_plans,id',
             'card_uuid' => 'required|exists:cards,uuid',
@@ -15,7 +38,6 @@
         ]);
         return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
     }
-
     // 1. Find the student and card from the provided IDs.
     $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
     $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
@@ -76,28 +98,6 @@
             'card_id' => $card->id,
             'scanned_at' => $voyage->scanned_at,
             'number_of_voyages' => $voyage->number_voyages,
-        ],
-        'card' => [
-            'id' => $card->id,
-            'nfc_uid' => $card->nfc_uid,
-            'balance' => (float)$card->balance,
-            'number_of_voyages' => $card->number_voyages,
-        ],
-    ]);
-    $etudiant = null;
-    if ($card->etudiant_id) {
-         $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
-    }
-    return response()->json([
-        'message' => 'Etudiant charged for voyage successfully.',
-        'etudiant' => $etudiant,
-        'voyage' => [
-            'id' => $voyage->id,
-            'plan' => $voyage->plan->name ?? null,
-            'amount' => (float)$voyage->amount,
-            'card_id' => $card->id,
-            'scanned_at' => $voyage->scanned_at,
-            'number_of_voyages' => $voyage->number_of_voyages,
         ],
         'card' => [
             'id' => $card->id,
