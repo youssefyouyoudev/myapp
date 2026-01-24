@@ -42,6 +42,10 @@ class VoyageController extends Controller
     $data = $validated;
     $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
     $data['card_id'] = $card->id;
+    // Fix: fetch etudiant_id from card relation or fail if not set
+    if (!$card->etudiant_id) {
+        return response()->json(['message' => 'Card is not linked to any etudiant'], 422);
+    }
     $data['etudiant_id'] = $card->etudiant_id;
     $data['scanned_at'] = now();
 

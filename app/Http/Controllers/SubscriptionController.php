@@ -27,6 +27,10 @@ class SubscriptionController extends Controller
             $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
             $data = $validated;
             $data['card_id'] = $card->id;
+            // Fix: fetch etudiant_id from card relation or fail if not set
+            if (!$card->etudiant_id) {
+                return response()->json(['message' => 'Card is not linked to any etudiant'], 422);
+            }
             $data['etudiant_id'] = $card->etudiant_id;
             $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
             unset($data['card_uuid']);
