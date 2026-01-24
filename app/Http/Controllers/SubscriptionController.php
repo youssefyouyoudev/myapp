@@ -16,6 +16,7 @@ class SubscriptionController extends Controller
     {
         try {
             $validated = $request->validate([
+                // 'uuid' => 'required|uuid|unique:subscriptions,uuid',
                 'subscription_plan_id' => 'required|exists:subscription_plans,id',
                 'card_uuid' => 'required|exists:cards,uuid',
                 'price' => 'required|numeric',
@@ -23,37 +24,27 @@ class SubscriptionController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'note' => 'nullable|string',
             ]);
-
-            // 1. Find the student and card from the provided IDs.
-            $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
             $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
-
-            // 2. Verify the card is linked to this specific student.
-            if ($card->etudiant_id != $etudiant->id) {
-                return response()->json(['message' => 'This card is not linked to the specified student.'], 422);
-            }
-
-            // 3. Proceed with existing logic, using the validated student and card.
             $data = $validated;
             $data['card_id'] = $card->id;
-            $data['etudiant_id'] = $etudiant->id;
+            $data['etudiant_id'] = $card->etudiant_id;
             $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
             unset($data['card_uuid']);
-
+            // Check for existing active subscription for this card/etudiant
             $subscription = \App\Models\Subscription::where('etudiant_id', $data['etudiant_id'])
                 ->where('card_id', $data['card_id'])
                 ->where('status', 'active')
                 ->first();
-
             if ($subscription) {
                 $subscription->update($data);
             } else {
                 $subscription = \App\Models\Subscription::create($data);
             }
+            // Store payment record
             \App\Models\Payment::create([
                 'uuid' => (string) \Illuminate\Support\Str::uuid(),
                 'user_id' => $request->user_id ?? null,
-                'etudiant_id' => $etudiant->id,
+                'etudiant_id' => $subscription->etudiant_id,
                 'card_id' => $subscription->card_id,
                 'amount' => $subscription->price,
                 'method' => 'espece',
@@ -63,10 +54,10 @@ class SubscriptionController extends Controller
                 'request' => $request->all(),
                 'subscription_id' => $subscription->id,
             ]);
-            // 4. Return the correct student details in the response.
+            // Optionally deduct price from card balance here if needed
             return response()->json([
                 'message' => 'Etudiant charged for subscription (monthly) successfully.',
-                'etudiant' => $etudiant,
+                'etudiant_id' => $subscription->etudiant_id,
                 'subscription' => [
                     'id' => $subscription->id,
                     'plan' => $subscription->plan->name ?? null,
