@@ -29,7 +29,7 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'username' => 'required|string|max:255',
+                'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
                 'role' => ['required', Rule::in(['admin', 'agent'])],
@@ -73,7 +73,7 @@ class UserController extends Controller
                 return response()->json(['success' => false, 'message' => 'User not found'], 404);
             }
             $validated = $request->validate([
-                'username' => 'sometimes|required|string|max:255',
+                'name' => 'sometimes|required|string|max:255',
                 'email' => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
                 'password' => 'sometimes|required|string|min:6',
                 'role' => ['sometimes', 'required', Rule::in(['admin', 'agent'])],
