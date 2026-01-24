@@ -27,25 +27,6 @@ class SubscriptionController extends Controller
             $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
             $data = $validated;
             $data['card_id'] = $card->id;
-            // Debug: log card and etudiant info
-            \Log::debug('Subscription charge: Card info', ['card' => $card->toArray()]);
-            if (!$card->etudiant_id) {
-                \Log::error('Card is not linked to any etudiant', ['card_id' => $card->id, 'card' => $card->toArray()]);
-                return response()->json([
-                    'message' => 'Card is not linked to any etudiant',
-                    'card_id' => $card->id,
-                    'card' => $card,
-                ], 422);
-            }
-            $etudiant = \App\Models\Etudiant::find($card->etudiant_id);
-            if (!$etudiant) {
-                \Log::error('Etudiant not found for card', ['card_id' => $card->id, 'etudiant_id' => $card->etudiant_id]);
-                return response()->json([
-                    'message' => 'Etudiant not found for this card',
-                    'card_id' => $card->id,
-                    'etudiant_id' => $card->etudiant_id,
-                ], 422);
-            }
             $data['etudiant_id'] = $card->etudiant_id;
             $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
             unset($data['card_uuid']);
