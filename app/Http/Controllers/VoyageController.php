@@ -1,29 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
-
-use App\Models\Voyage;
-use App\Models\Card;
-use App\Models\CardSold;
-use App\Models\Subscription;
-use App\Http\Requests\StoreVoyageRequest;
-use App\Http\Resources\VoyageResource;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-
-class VoyageController extends Controller
-{
-
-    /**
-    * Charge an etudiant for a voyage.
-     */
-    public function charge($etudiantId, \Illuminate\Http\Request $request)
-{
     try {
-        // 1. Added 'number_of_voyages' to validation rules.
         $validated = $request->validate([
             'voyage_plan_id' => 'required|exists:voyage_plans,id',
             'card_uuid' => 'required|exists:cards,uuid',
@@ -38,46 +15,47 @@ class VoyageController extends Controller
         ]);
         return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
     }
+
+    // 1. Find the student and card from the provided IDs.
+    $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
     $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
+
+    // 2. Verify the card is linked to this specific student.
+    if ($card->etudiant_id != $etudiant->id) {
+        return response()->json(['message' => 'This card is not linked to the specified student.'], 422);
+    }
+
+    // 3. Proceed with existing logic.
     $data = $validated;
     $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
     $data['card_id'] = $card->id;
-    // Fix: fetch etudiant_id from card relation or fail if not set
-    if (!$card->etudiant_id) {
-        return response()->json(['message' => 'Card is not linked to any etudiant'], 422);
-    }
-    $data['etudiant_id'] = $card->etudiant_id;
+    $data['etudiant_id'] = $etudiant->id;
     $data['scanned_at'] = now();
 
-    // 2. Get the value from the validated data.
     $newNumberVoyages = (int)$data['number_of_voyages'];
     unset($data['card_uuid']);
 
-    // 3. Changed 'number_voyages' to 'number_of_voyages' everywhere below.
     $voyage = \App\Models\Voyage::where('card_id', $card->id)
         ->where('voyage_plan_id', $data['voyage_plan_id'])
         ->orderByDesc('id')
         ->first();
 
     if ($voyage) {
-        // Assumes the DB column is 'number_of_voyages'
         $voyage->number_voyages += $newNumberVoyages;
         $voyage->save();
         $action = 'recharged_existing_voyage';
     } else {
-        // 'number_of_voyages' is already in $data from validation
         $voyage = \App\Models\Voyage::create($data);
         $action = 'created_new_voyage';
     }
 
-    // Assumes the DB column is 'number_of_voyages'
     $card->number_voyages += $newNumberVoyages;
     $card->save();
 
     \App\Models\Payment::create([
         'uuid' => (string) \Illuminate\Support\Str::uuid(),
         'user_id' => $request->user_id ?? null,
-        'etudiant_id' => $card->etudiant_id,
+        'etudiant_id' => $etudiant->id,
         'card_id' => $card->id,
         'amount' => $voyage->amount,
         'method' => 'espece',
@@ -87,7 +65,25 @@ class VoyageController extends Controller
         'request' => $request->all(),
         'voyage_id' => $voyage->id,
     ]);
-    // Fetch etudiant as array (not Eloquent model)
+    // 4. Return the correct student details in the response.
+    return response()->json([
+        'message' => 'Etudiant charged for voyage successfully.',
+        'etudiant' => $etudiant,
+        'voyage' => [
+            'id' => $voyage->id,
+            'plan' => $voyage->plan->name ?? null,
+            'amount' => (float)$voyage->amount,
+            'card_id' => $card->id,
+            'scanned_at' => $voyage->scanned_at,
+            'number_of_voyages' => $voyage->number_voyages,
+        ],
+        'card' => [
+            'id' => $card->id,
+            'nfc_uid' => $card->nfc_uid,
+            'balance' => (float)$card->balance,
+            'number_of_voyages' => $card->number_voyages,
+        ],
+    ]);
     $etudiant = null;
     if ($card->etudiant_id) {
          $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
