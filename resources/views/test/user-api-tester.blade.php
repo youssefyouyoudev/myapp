@@ -101,7 +101,7 @@
         function getToken() {
             return localStorage.getItem('api_token') || '';
         }
-        setToken(getToken());
+        setToken('2|p84cqg8WAjfithocAqNxxhzDgpGubqOsxwY1I0DE6c597f3b');
 
         // Login
         document.getElementById('login-form').onsubmit = async function(e) {

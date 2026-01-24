@@ -13,10 +13,10 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::all();
-            // where('role', '=', 'agent')->
-            // orWhere('role', '=', 'admin')
-            // ->get();
+            $users = User::
+            where('role', '=', 'agent')->
+            orWhere('role', '=', 'admin')
+            ->get();
             return response()->json(['success' => true, 'data' => $users]);
         } catch (\Exception $e) {
             return response()->json([
