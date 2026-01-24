@@ -55,9 +55,10 @@ class SubscriptionController extends Controller
                 'subscription_id' => $subscription->id,
             ]);
             // Optionally deduct price from card balance here if needed
+            $subscription->load('etudiant');
             return response()->json([
                 'message' => 'Etudiant charged for subscription (monthly) successfully.',
-                'etudiant_id' => $subscription->etudiant_id,
+                'etudiant' => $subscription->etudiant,
                 'subscription' => [
                     'id' => $subscription->id,
                     'plan' => $subscription->plan->name ?? null,
