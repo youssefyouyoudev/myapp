@@ -90,7 +90,7 @@ class VoyageController extends Controller
     // Fetch etudiant as array (not Eloquent model)
     $etudiant = null;
     if ($card->etudiant_id) {
-        $etudiant = \App\Models\Etudiant::find($card->etudiant_id);
+         $etudiant = \App\Models\Etudiant::findOrFail($etudiantId);
     }
     return response()->json([
         'message' => 'Etudiant charged for voyage successfully.',
