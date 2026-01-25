@@ -42,10 +42,10 @@ class Etudiant extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function card(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(Card::class);
-    }
+public function cards()
+{
+    return $this->hasMany(\App\Models\Card::class);
+}
 
     public function payments(): HasMany
     {
