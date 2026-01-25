@@ -244,7 +244,7 @@ public function etudiantSoldeByUid($nfc_uid)
         ]);
     }
 
-    $etudiant = $card->etudiants;
+    $etudiant = $card->etudiant;
 
     return response()->json([
         'isLinked' => true,
