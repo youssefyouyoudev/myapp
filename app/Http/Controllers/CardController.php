@@ -6,8 +6,7 @@
         use App\Http\Requests\StoreCardRequest;
         use App\Http\Requests\UpdateCardRequest;
         use App\Http\Resources\CardResource;
-use App\Models\Etudiant;
-use Illuminate\Support\Str;
+        use Illuminate\Support\Str;
         use Illuminate\Http\Request;
 
     class CardController extends Controller{
@@ -220,7 +219,7 @@ use Illuminate\Support\Str;
 public function etudiantSoldeByUid($nfc_uid)
 {
     // Find the card by its NFC UID, and load the etudiant relationship
-    $card = \App\Models\Card::with(['etudiants', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
+    $card = \App\Models\Card::with(['etudiant', 'voyages', 'subscriptions'])->where('nfc_uid', $nfc_uid)->first();
     // Get last 5 validations for this card
     $lastValidations = [];
     if ($card) {
@@ -229,12 +228,11 @@ public function etudiantSoldeByUid($nfc_uid)
             ->limit(5)
             ->get(['id', 'validated_at', 'created_at']);
     }
-$etudiant=Etudiant::find($card->etudiant_id);
+
     // If the card or the etudiant link doesn't exist, return a clear "not linked" response
-    if (!$card || !$etudiant) {
+    if (!$card || !$card->etudiant) {
         return response()->json([
             'isLinked' => false,
-        "cardetudiant_id" => $card->etudiant_id,
             'etudiant' => null,
             'cardStatus' => $card ? $card->status : 'Not Found',
             'balance' => $card ? (float)$card->balance : null,
@@ -246,35 +244,28 @@ $etudiant=Etudiant::find($card->etudiant_id);
         ]);
     }
 
-    // $etudiant = $card->etudiants;
+    $etudiant = $card->etudiant;
 
     return response()->json([
         'isLinked' => true,
-        // "cardetudiant_id" => $card->etudiant_id,
         'etudiant' => [
-
-            'id' => $etudiant->id,
+            'id' => $etudiant->id, // Essential: Include the etudiant ID
             'user_id' => $etudiant->user_id,
-            'nom' => $etudiant->nom,
-            'prenom' => $etudiant->prenom,
-            'etablissement' => $etudiant->etablissement,
+            'full_name' => $etudiant->full_name,
+            'phone' => $etudiant->phone,
             'email' => $etudiant->email,
-            'telephone' => $etudiant->telephone,
-            'adresse' => $etudiant->adresse,
-            'carte_nationale' => $etudiant->carte_nationale,
-            'carte_etudiant' => $etudiant->carte_etudiant,
-            'img_user' => $etudiant->img_user,
-            'img_carte_nationale' => $etudiant->img_carte_nationale,
-            'img_carte_nationale_verso' => $etudiant->img_carte_nationale_verso,
-            'img_carte_etudiant' => $etudiant->img_carte_etudiant,
+            'status' => $etudiant->status,
+            'cin' => $etudiant->cin,
+            'date_of_birth' => $etudiant->date_of_birth,
+            'school' => $etudiant->school,
             'created_at' => $etudiant->created_at,
             'updated_at' => $etudiant->updated_at,
         ],
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
         'number_voyages' => $card->number_voyages,
-        'cardId' => $card->id,
-        'cardUuid' => $card->uuid,
+        'cardId' => $card->id, // Add the card's ID
+        'cardUuid' => $card->uuid, // Add the card's UUID
         'voyages' => $card->voyages,
         'subscriptions' => $card->subscriptions,
         'lastValidations' => $lastValidations,
