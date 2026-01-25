@@ -14,7 +14,8 @@ class EtudiantController extends Controller
     public function index()
     {
         // No changes needed here.
-        return Etudiant::paginate(20);
+        $etudiants = Etudiant::with(['cards', 'subscriptions']);
+        return $etudiants->paginate(20);
     }
 
     /**
