@@ -244,28 +244,33 @@ public function etudiantSoldeByUid($nfc_uid)
         ]);
     }
 
-    $etudiant = $card->etudiant;
+    $etudiant = $card->etudiants;
 
     return response()->json([
         'isLinked' => true,
         'etudiant' => [
-            'id' => $etudiant->id, // Essential: Include the etudiant ID
+            'id' => $etudiant->id,
             'user_id' => $etudiant->user_id,
-            'full_name' => $etudiant->full_name,
-            'phone' => $etudiant->phone,
+            'nom' => $etudiant->nom,
+            'prenom' => $etudiant->prenom,
+            'etablissement' => $etudiant->etablissement,
             'email' => $etudiant->email,
-            'status' => $etudiant->status,
-            'cin' => $etudiant->cin,
-            'date_of_birth' => $etudiant->date_of_birth,
-            'school' => $etudiant->school,
+            'telephone' => $etudiant->telephone,
+            'adresse' => $etudiant->adresse,
+            'carte_nationale' => $etudiant->carte_nationale,
+            'carte_etudiant' => $etudiant->carte_etudiant,
+            'img_user' => $etudiant->img_user,
+            'img_carte_nationale' => $etudiant->img_carte_nationale,
+            'img_carte_nationale_verso' => $etudiant->img_carte_nationale_verso,
+            'img_carte_etudiant' => $etudiant->img_carte_etudiant,
             'created_at' => $etudiant->created_at,
             'updated_at' => $etudiant->updated_at,
         ],
         'cardStatus' => $card->status,
         'balance' => (float)$card->balance,
         'number_voyages' => $card->number_voyages,
-        'cardId' => $card->id, // Add the card's ID
-        'cardUuid' => $card->uuid, // Add the card's UUID
+        'cardId' => $card->id,
+        'cardUuid' => $card->uuid,
         'voyages' => $card->voyages,
         'subscriptions' => $card->subscriptions,
         'lastValidations' => $lastValidations,
