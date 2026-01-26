@@ -1,85 +1,69 @@
-<h2>Charge Subscription</h2>
-<form id="charge-subscription-form">
-	<label>Etudiant ID: <input type="text" name="etudiant_id" required></label><br>
-	<label>Card UUID: <input type="text" name="card_uuid" required></label><br>
-	<label>Subscription Plan ID: <input type="text" name="subscription_plan_id" required></label><br>
-	<label>Amount: <input type="number" step="0.01" name="amount" required></label><br>
-	<label>Note: <input type="text" name="note"></label><br>
-	<label>Token: <input type="text" name="token" required></label><br>
-	<button type="submit">Charge Subscription</button>
-</form>
-<pre id="charge-subscription-result"></pre>
-
-<h2>Charge Voyage</h2>
-<form id="charge-voyage-form">
-	<label>Etudiant ID: <input type="text" name="etudiant_id" required></label><br>
-	<label>Card UUID: <input type="text" name="card_uuid" required></label><br>
-	<label>Voyage Plan ID: <input type="text" name="voyage_plan_id" required></label><br>
-	<label>Amount: <input type="number" step="0.01" name="amount" required></label><br>
-	<label>Number of Voyages: <input type="number" name="number_of_voyages" min="1" value="1" required></label><br>
-	<label>Note: <input type="text" name="note"></label><br>
-	<label>Token: <input type="text" name="token" required></label><br>
-	<button type="submit">Charge Voyage</button>
-</form>
-<pre id="charge-voyage-result"></pre>
-
+<div class="container">
+	<h2>Etudiant API Tester</h2>
+	<div>
+		<h4>List Etudiants</h4>
+		<button onclick="listEtudiants()">GET /api/etudiants</button>
+	</div>
+	<div>
+		<h4>Show Etudiant</h4>
+		<input type="number" id="showEtudiantId" placeholder="Etudiant ID">
+		<button onclick="showEtudiant()">GET /api/etudiants/{id}</button>
+	</div>
+	<div>
+		<h4>Response</h4>
+		<div id="etudiantImages"></div>
+		<div id="etudiantError" style="color:red;"></div>
+		<pre id="etudiantResponse"></pre>
+	</div>
+</div>
 <script>
-// Helper to POST JSON with Bearer token
-async function postWithToken(url, data, token) {
-	const res = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'Accept': 'application/json',
-			'Authorization': 'Bearer ' + token
-		},
-		body: JSON.stringify(data)
-	});
-	return res.json();
+function setEtudiantResponse(data) {
+	document.getElementById('etudiantError').textContent = '';
+	const imgFields = [
+		'img_user',
+		'img_carte_nationale',
+		'img_carte_nationale_verso',
+		'img_carte_etudiant'
+	];
+	let imagesHtml = '';
+	function renderImages(obj) {
+		let html = '';
+		imgFields.forEach(field => {
+			if (obj && obj[field]) {
+				let url = obj[field].startsWith('http') ? obj[field] : ('/storage/' + obj[field]);
+				html += `<div><b>${field}:</b><br><img src="${url}" alt="${field}" style="max-width:200px;max-height:200px;"></div>`;
+			}
+		});
+		return html;
+	}
+	if (data && data.data && Array.isArray(data.data)) {
+		imagesHtml = data.data.map(e => renderImages(e)).join('');
+	} else if (data && typeof data === 'object') {
+		imagesHtml = renderImages(data);
+	} else {
+		imagesHtml = '';
+	}
+	document.getElementById('etudiantImages').innerHTML = imagesHtml;
+	document.getElementById('etudiantResponse').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 }
-
-// Charge Subscription
-document.getElementById('charge-subscription-form').onsubmit = async function(e) {
-	e.preventDefault();
-	const form = e.target;
-	const etudiant_id = form.etudiant_id.value;
-	const url = `/api/etudiants/${etudiant_id}/charge-subscription`;
-	const data = {
-		card_uuid: form.card_uuid.value,
-		subscription_plan_id: form.subscription_plan_id.value,
-		amount: form.amount.value,
-		note: form.note.value
-	};
-	const token = form.token.value;
-	document.getElementById('charge-subscription-result').textContent = 'Loading...';
-	try {
-		const result = await postWithToken(url, data, token);
-		document.getElementById('charge-subscription-result').textContent = JSON.stringify(result, null, 2);
-	} catch (err) {
-		document.getElementById('charge-subscription-result').textContent = 'Error: ' + err;
-	}
-};
-
-// Charge Voyage
-document.getElementById('charge-voyage-form').onsubmit = async function(e) {
-	e.preventDefault();
-	const form = e.target;
-	const etudiant_id = form.etudiant_id.value;
-	const url = `/api/etudiants/${etudiant_id}/charge-voyage`;
-	const data = {
-		card_uuid: form.card_uuid.value,
-		voyage_plan_id: form.voyage_plan_id.value,
-		amount: form.amount.value,
-		number_of_voyages: form.number_of_voyages.value,
-		note: form.note.value
-	};
-	const token = form.token.value;
-	document.getElementById('charge-voyage-result').textContent = 'Loading...';
-	try {
-		const result = await postWithToken(url, data, token);
-		document.getElementById('charge-voyage-result').textContent = JSON.stringify(result, null, 2);
-	} catch (err) {
-		document.getElementById('charge-voyage-result').textContent = 'Error: ' + err;
-	}
-};
+function showEtudiant() {
+	const id = document.getElementById('showEtudiantId').value;
+	fetch(`/api/etudiants/${id}`)
+		.then(async r => {
+			const text = await r.text();
+			try { setEtudiantResponse(JSON.parse(text)); }
+			catch { setEtudiantResponse(text); }
+		})
+		.catch(e => setEtudiantResponse(e.toString()));
+}
+function listEtudiants() {
+	fetch('/api/etudiants')
+		.then(async r => {
+			const text = await r.text();
+			try { setEtudiantResponse(JSON.parse(text)); }
+			catch { setEtudiantResponse(text); }
+		})
+		.catch(e => setEtudiantResponse(e.toString()));
+}
 </script>
+
