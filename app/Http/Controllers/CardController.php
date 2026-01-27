@@ -145,6 +145,34 @@
         ]);
     }
 
+    // If no voyage record but card->number_voyages > 0, allow validation
+    if ($card->number_voyages > 0) {
+        \Log::error('Card validation: fallback to card number_voyages', [
+            'card_id' => $card->id,
+            'user_id' => $card->etudiant ? $card->etudiant->user_id : null,
+            'number_voyages_before' => $card->number_voyages,
+            'todayValidations' => $todayValidations,
+            'date' => $today,
+            'card' => $card,
+            'request' => request()->all(),
+            'etudiant' => $card->etudiant,
+        ]);
+        error_log('Card validation: fallback to card number_voyages for card_id ' . $card->id . ' on ' . $today);
+        $card->number_voyages -= 1;
+        $card->save();
+        // Store validation record
+        \App\Models\Validation::create([
+            'card_id' => $card->id,
+            'validated_at' => $now,
+        ]);
+        return response()->json([
+            'success' => true,
+            'type' => 'voyage',
+            'message' => 'Validation allowed (fallback card number_voyages)',
+            'remaining' => $card->number_voyages,
+        ]);
+    }
+
     \Log::error('Card validation failed: insufficient solde and no active subscription', [
         'card_id' => $card->id,
         'user_id' => $card->etudiant ? $card->etudiant->user_id : null,
