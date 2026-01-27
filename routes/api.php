@@ -16,7 +16,7 @@ use App\Http\Controllers\EtudiantController;
 Route::post('login', [AuthController::class, 'login']);
 
 // Protected routes
-// Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
 				// Card validation (subscription/voyage logic)
 				Route::post('cards/{card}/validate', [CardController::class, 'validateCard']);
 			Route::get('logs', [\App\Http\Controllers\LogController::class, 'index']);
@@ -73,4 +73,4 @@ Route::post('login', [AuthController::class, 'login']);
 
 	// Dashboard route
 	Route::get('dashboard', [DashboardController::class, 'index']);
-// });
+});
