@@ -18,32 +18,38 @@ class LogController extends Controller
 
     }
     public function getByUserIdAndDateRange(Request $request, $user_id)
-    {
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
-        if (!$startDate || !$endDate) {
-            return response()->json(['error' => 'start_date and end_date query parameters are required'], 400);
-        }
-        // Ensure both are strings and not numbers
-        if (!is_string($startDate) || !is_string($endDate)) {
-            return response()->json(['error' => 'start_date and end_date must be strings'], 400);
-        }
-        $dateRange = [$startDate, $endDate];
-        $logs = Log::where('user_id', $user_id)
-            ->whereBetween('created_at', $dateRange)
-            ->get();
-        $count = $logs->count();
-        // Get total amount from payments table for this user and date range
-        $totalAmount = \App\Models\Payment::where('user_id', $user_id)
-            ->whereBetween('created_at', $dateRange)
-            ->sum('amount');
-        return response()->json([
-            'logs' => $logs,
-            'count' => $count,
-            'total_amount' => $totalAmount,
-        ]);
+{
+    $startDate = $request->query('start_date');
+    $endDate = $request->query('end_date');
+
+    if (!$startDate || !$endDate) {
+        return response()->json(['error' => 'start_date and end_date query parameters are required'], 400);
     }
 
+    if (!is_string($startDate) || !is_string($endDate)) {
+        return response()->json(['error' => 'start_date and end_date must be strings'], 400);
+    }
+
+    // Use whereDate to correctly handle date range filtering
+    $logs = Log::where('user_id', $user_id)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->get();
+
+    $count = $logs->count();
+
+    // Get total amount from payments table for this user and date range
+    $totalAmount = \App\Models\Payment::where('user_id', $user_id) // Fixed: was 'user_id' string
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->sum('amount');
+
+    return response()->json([
+        'logs' => $logs,
+        'count' => $count,
+        'total_amount' => $totalAmount,
+    ]);
+}
     /**
      * Show the form for creating a new resource.
      */
