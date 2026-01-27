@@ -22,7 +22,13 @@ class LogController extends Controller
         $logs = Log::where('user_id', $user_id)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
-        return response()->json($logs);
+        $count = $logs->count();
+        $totalAmount = $logs->sum('amount');
+        return response()->json([
+            'logs' => $logs,
+            'count' => $count,
+            'total_amount' => $totalAmount,
+        ]);
     }
 
     /**
