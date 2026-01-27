@@ -77,7 +77,7 @@
             'type' => 'subscription',
             'message' => 'Validation allowed (subscription)',
             'remaining' => 4 - ($todayValidations + 1),
-            'subscription_details' => [ // Pass subscription details in the response
+            'subscription_details' => [
                 'type' => $activeSubscription->plan->name,
                 'price' => $activeSubscription->plan->price,
                 'start_date' => $activeSubscription->start_date,
@@ -283,7 +283,7 @@ public function etudiantSoldeByUid($nfc_uid)
         'cardId' => $card->id,
         'cardUuid' => $card->uuid,
         'voyages' => $card->voyages,
-        'subscriptions' => $card->subscriptions,
+        'subscriptions' => $card->subscriptions->load('plan'),
         'lastValidations' => $lastValidations,
     ]);
 }
