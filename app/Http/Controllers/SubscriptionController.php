@@ -50,10 +50,15 @@ class SubscriptionController extends Controller
                 'method' => 'espece',
                 'reference' => null,
             ]);
-            $this->logUserAction('charge_subscription', 'Subscription', $subscription->id, [
-                'request' => $request->all(),
-                'subscription_id' => $subscription->id,
-            ]);
+// Define the action for logging
+$action = $subscription->wasRecentlyCreated ? 'create_subscription' : 'update_subscription';
+$this->logUserAction(
+    $request->user_id, // <--- ADD THIS PARAMETER
+    $action,
+    'Subscription',
+    $subscription->id,
+    ['request' => $request->all(), 'subscription_id' => $subscription->id]
+);
             // Optionally deduct price from card balance here if needed
             return response()->json([
                 'message' => 'Etudiant charged for subscription (monthly) successfully.',

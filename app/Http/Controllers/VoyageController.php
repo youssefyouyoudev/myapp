@@ -79,10 +79,13 @@ class VoyageController extends Controller
         'method' => 'espece',
         'reference' => null,
     ]);
-    $this->logUserAction($action, 'Voyage', $voyage->id, [
-        'request' => $request->all(),
-        'voyage_id' => $voyage->id,
-    ]);
+   $this->logUserAction(
+    $request->user_id, // <--- ADD THIS PARAMETER
+    $action,
+    'Voyage',
+    $voyage->id,
+    ['request' => $request->all(), 'voyage_id' => $voyage->id]
+);
     return response()->json([
         'message' => 'Etudiant charged for voyage successfully.',
         'etudiant_id' => $card->etudiant_id,
