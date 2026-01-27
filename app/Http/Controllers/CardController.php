@@ -259,11 +259,20 @@
         'etudiant_id' => 'required|exists:etudiants,id',
     ]);
 
-    // 2. Find a card by its nfc_uid, or prepare to create a new one.
-    // This assumes you have a unique 'nfc_uid' column on your 'cards' table.
+    // 2. Prevent etudiant from having more than one card
+    $existingCard = \App\Models\Card::where('etudiant_id', $request->etudiant_id)->first();
+    if ($existingCard) {
+        return response()->json([
+            'message' => 'This etudiant already has a card assigned.',
+            'card_id' => $existingCard->id,
+            'card_nfc_uid' => $existingCard->nfc_uid,
+        ], 422);
+    }
+
+    // 3. Find a card by its nfc_uid, or prepare to create a new one.
     $card = \App\Models\Card::firstOrNew(['nfc_uid' => $nfcUid]);
 
-    // 3. If the card is new (i.e., it doesn't exist in the database yet),
+    // 4. If the card is new (i.e., it doesn't exist in the database yet),
     //    set its default properties.
     if (!$card->exists) {
         $now = now();
@@ -278,14 +287,14 @@
         $card->uuid = $nfcUid;
     }
 
-    // 4. Find the client and link it to the card.
+    // 5. Find the client and link it to the card.
     $etudiant = \App\Models\Etudiant::findOrFail($request->etudiant_id);
     $card->etudiant_id = $etudiant->id;
 
-    // 5. Save the card. This will either INSERT a new card or UPDATE the existing one.
+    // 6. Save the card. This will either INSERT a new card or UPDATE the existing one.
     $card->save();
 
-    // 6. Return a success response.
+    // 7. Return a success response.
     return response()->json([
         'message' => 'Card linked to etudiant successfully.',
         'card' => new \App\Http\Resources\CardResource($card->fresh()->load(['etudiant', 'voyages', 'cardSolds'])),
