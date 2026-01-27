@@ -61,12 +61,8 @@ class LogController extends Controller
             'logs.*.details' => 'nullable',
         ]);
 
-        $userId = $request->user() ? $request->user()->id : null;
         $created = [];
         foreach ($data['logs'] as $log) {
-            if (empty($log['user_id']) && $userId) {
-                $log['user_id'] = $userId;
-            }
             $created[] = \App\Models\Log::create($log);
         }
         return response()->json([
