@@ -8,7 +8,6 @@
         use App\Http\Resources\CardResource;
         use Illuminate\Support\Str;
         use Illuminate\Http\Request;
-        use Carbon\Carbon;
 
     class CardController extends Controller{
         /**
@@ -38,18 +37,19 @@
      * - If the card has an active subscription, allow up to 4 validations per day.
      * - If not, decrement solde (balance) by 1 if possible.
      */
-  function validateCard($cardId)
+    function validateCard($cardId)
 {
-    // Eager load the card with its student and all 'active' status subscriptions.
-    // Date filtering will be handled in code to provide better error messages.
     $card = Card::with(['etudiant.subscriptions' => function($q) {
-        $q->where('status', 'active')->with('plan');
+        $q->where('status', 'active')
+          ->where('start_date', '<=', now())
+          ->where('end_date', '>=', now())
+          ->with('plan'); // Eager load the subscription plan
     }])->findOrFail($cardId);
 
     $now = now();
     $today = $now->toDateString();
 
-    // 1. Check validation limit for the day.
+    // Count today's validations for this card (from validations table)
     $todayValidations = \App\Models\Validation::where('card_id', $card->id)
         ->whereDate('validated_at', $today)
         ->count();
@@ -61,30 +61,12 @@
         ], 403);
     }
 
-    // 2. Find a currently active subscription or a future-dated one.
-    $activeSubscription = null;
-    $futureSubscription = null;
-    if ($card->etudiant) {
-        // Sort by start_date to handle cases with multiple subscriptions
-        $subscriptions = $card->etudiant->subscriptions->sortBy('start_date');
-
-        foreach ($subscriptions as $subscription) {
-            $startDate = Carbon::parse($subscription->start_date)->startOfDay();
-            $endDate = Carbon::parse($subscription->end_date)->endOfDay();
-
-            if ($now->between($startDate, $endDate)) {
-                $activeSubscription = $subscription;
-                break; // Found a valid subscription, no need to check others.
-            }
-
-            if ($startDate->isFuture() && !$futureSubscription) {
-                $futureSubscription = $subscription; // Found the next upcoming subscription.
-            }
-        }
-    }
-
-    // 3. If a subscription is currently active, succeed.
+    // Check for active subscription
+    $activeSubscription = ($card->etudiant && $card->etudiant->subscriptions->count() > 0)
+        ? $card->etudiant->subscriptions->first()
+        : null;
     if ($activeSubscription) {
+        // Store validation record
         \App\Models\Validation::create([
             'card_id' => $card->id,
             'validated_at' => $now,
@@ -96,32 +78,33 @@
             'message' => 'Validation allowed (subscription)',
             'remaining' => 4 - ($todayValidations + 1),
             'subscription_details' => [
-                'type' => optional($activeSubscription->plan)->name,
-                'price' => optional($activeSubscription->plan)->price,
+                'type' => $activeSubscription->plan->name,
+                'price' => $activeSubscription->plan->price,
                 'start_date' => $activeSubscription->start_date,
                 'end_date' => $activeSubscription->end_date,
             ]
         ]);
     }
 
-    // 4. If no active subscription, check for voyages.
+    // No active subscription: check for voyage with number_voyages > 0
     $voyage = \App\Models\Voyage::where('card_id', $card->id)
         ->where('number_voyages', '>', 0)
         ->orderByDesc('id')
         ->first();
 
     if ($voyage) {
-        $voyage->decrement('number_voyages');
-        // Also decrement card's number_voyages if it's a separate counter
+        $voyage->number_voyages -= 1;
+        $voyage->save();
+        // Also decrement card's number_voyages
         if ($card->number_voyages > 0) {
-            $card->decrement('number_voyages');
+            $card->number_voyages -= 1;
+            $card->save();
         }
-
+        // Store validation record
         \App\Models\Validation::create([
             'card_id' => $card->id,
             'validated_at' => $now,
         ]);
-
         return response()->json([
             'success' => true,
             'type' => 'voyage',
@@ -130,19 +113,12 @@
         ]);
     }
 
-    // 5. If all checks fail, provide the most specific error reason.
-    if ($futureSubscription) {
-        return response()->json([
-            'success' => false,
-            'reason' => 'Subscription not active yet. Starts on ' . Carbon::parse($futureSubscription->start_date)->toDateString(),
-        ], 403);
-    }
-
     return response()->json([
         'success' => false,
         'reason' => 'Insufficient solde and no active subscription',
     ], 403);
 }
+
     public function index()
     {
         $cards = Card::with('etudiant', 'voyages', 'cardSolds')->paginate(20);
