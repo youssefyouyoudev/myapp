@@ -37,76 +37,87 @@
      * - If the card has an active subscription, allow up to 4 validations per day.
      * - If not, decrement solde (balance) by 1 if possible.
      */
-     function validateCard($cardId)
-    {
-        $card = Card::with(['etudiant.subscriptions' => function($q) {
-            $q->where('status', 'active')
-              ->where('start_date', '<=', now())
-              ->where('end_date', '>=', now());
-        }])->findOrFail($cardId);
+    function validateCard($cardId)
+{
+    $card = Card::with(['etudiant.subscriptions' => function($q) {
+        $q->where('status', 'active')
+          ->where('start_date', '<=', now())
+          ->where('end_date', '>=', now())
+          ->with('plan'); // Eager load the subscription plan
+    }])->findOrFail($cardId);
 
-        $now = now();
-        $today = $now->toDateString();
+    $now = now();
+    $today = $now->toDateString();
 
-        // Count today's validations for this card (from validations table)
-        $todayValidations = \App\Models\Validation::where('card_id', $card->id)
-            ->whereDate('validated_at', $today) // changed from created_at to validated_at
-            ->count();
-        if ($todayValidations >= 4) {
-            return response()->json([
-                'success' => false,
-                'reason' => 'Validation limit reached (4 per day)',
-            ], 403);
-        }
+    // Count today's validations for this card (from validations table)
+    $todayValidations = \App\Models\Validation::where('card_id', $card->id)
+        ->whereDate('validated_at', $today)
+        ->count();
 
-        // Check for active subscription
-        $activeSubscription = $card->etudiant && $card->etudiant->subscriptions->first();
-        if ($activeSubscription) {
-            // Store validation record
-            \App\Models\Validation::create([
-                'card_id' => $card->id,
-                'validated_at' => $now,
-            ]);
-            return response()->json([
-                'success' => true,
-                'type' => 'subscription',
-                'message' => 'Validation allowed (subscription)',
-                'remaining' => 4 - ($todayValidations + 1),
-            ]);
-        }
-
-
-        // No active subscription: check for voyage with number_voyages > 0
-        $voyage = \App\Models\Voyage::where('card_id', $card->id)
-            ->where('number_voyages', '>', 0)
-            ->orderByDesc('id')
-            ->first();
-        if ($voyage) {
-            $voyage->number_voyages -= 1;
-            $voyage->save();
-            // Also decrement card's number_voyages
-            if ($card->number_voyages > 0) {
-                $card->number_voyages -= 1;
-                $card->save();
-            }
-            // Store validation record
-            \App\Models\Validation::create([
-                'card_id' => $card->id,
-                'validated_at' => $now,
-            ]);
-            return response()->json([
-                'success' => true,
-                'type' => 'voyage',
-                'message' => 'Validation allowed (voyage solde)',
-                'remaining' => $voyage->number_voyages,
-            ]);
-        }
-
+    if ($todayValidations >= 4) {
         return response()->json([
             'success' => false,
-            'reason' => 'Insufficient solde and no active subscription',
+            'reason' => 'Validation limit reached (4 per day)',
         ], 403);
     }
+
+    // Check for active subscription
+    $activeSubscription = ($card->etudiant && $card->etudiant->subscriptions->count() > 0)
+        ? $card->etudiant->subscriptions->first()
+        : null;
+    if ($activeSubscription) {
+        // Store validation record
+        \App\Models\Validation::create([
+            'card_id' => $card->id,
+            'validated_at' => $now,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'type' => 'subscription',
+            'message' => 'Validation allowed (subscription)',
+            'remaining' => 4 - ($todayValidations + 1),
+            'subscription_details' => [ // Pass subscription details in the response
+                'type' => $activeSubscription->plan->name,
+                'price' => $activeSubscription->plan->price,
+                'start_date' => $activeSubscription->start_date,
+                'end_date' => $activeSubscription->end_date,
+            ]
+        ]);
+    }
+
+    // No active subscription: check for voyage with number_voyages > 0
+    $voyage = \App\Models\Voyage::where('card_id', $card->id)
+        ->where('number_voyages', '>', 0)
+        ->orderByDesc('id')
+        ->first();
+
+    if ($voyage) {
+        $voyage->number_voyages -= 1;
+        $voyage->save();
+        // Also decrement card's number_voyages
+        if ($card->number_voyages > 0) {
+            $card->number_voyages -= 1;
+            $card->save();
+        }
+        // Store validation record
+        \App\Models\Validation::create([
+            'card_id' => $card->id,
+            'validated_at' => $now,
+        ]);
+        return response()->json([
+            'success' => true,
+            'type' => 'voyage',
+            'message' => 'Validation allowed (voyage solde)',
+            'remaining' => $voyage->number_voyages,
+        ]);
+    }
+
+    return response()->json([
+        'success' => false,
+        'reason' => 'Insufficient solde and no active subscription',
+    ], 403);
+}
 
     public function index()
     {
