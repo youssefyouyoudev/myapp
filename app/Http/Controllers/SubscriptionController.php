@@ -16,7 +16,6 @@ class SubscriptionController extends Controller
     {
         try {
             $validated = $request->validate([
-                // 'uuid' => 'required|uuid|unique:subscriptions,uuid',
                 'subscription_plan_id' => 'required|exists:subscription_plans,id',
                 'card_uuid' => 'required|exists:cards,uuid',
                 'price' => 'required|numeric',
@@ -30,16 +29,32 @@ class SubscriptionController extends Controller
             $data['etudiant_id'] = $card->etudiant_id;
             $data['uuid'] = $request->uuid ?? (string) \Illuminate\Support\Str::uuid();
             unset($data['card_uuid']);
-            // Check for existing active subscription for this card/etudiant
-            $subscription = \App\Models\Subscription::where('etudiant_id', $data['etudiant_id'])
-                ->where('card_id', $data['card_id'])
+
+            // Check for existing active subscription for this card
+            $existingActive = \App\Models\Subscription::where('card_id', $data['card_id'])
                 ->where('status', 'active')
+                ->where(function($q) use ($data) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
+                })
                 ->first();
-            if ($subscription) {
-                $subscription->update($data);
-            } else {
-                $subscription = \App\Models\Subscription::create($data);
+            if ($existingActive) {
+                return response()->json([
+                    'message' => 'This card already has an active subscription.',
+                    'subscription_id' => $existingActive->id,
+                ], 422);
             }
+
+            // Prevent period > 2 months from today
+            $maxEndDate = now()->addMonths(2)->endOfDay();
+            if (\Carbon\Carbon::parse($data['end_date'])->gt($maxEndDate)) {
+                return response()->json([
+                    'message' => 'Subscription period cannot exceed 2 months from today.',
+                    'max_end_date' => $maxEndDate->toDateString(),
+                ], 422);
+            }
+
+            $subscription = \App\Models\Subscription::create($data);
+
             // Store payment record
             \App\Models\Payment::create([
                 'uuid' => (string) \Illuminate\Support\Str::uuid(),
@@ -50,17 +65,15 @@ class SubscriptionController extends Controller
                 'method' => 'espece',
                 'reference' => null,
             ]);
-// Define the action for logging
-$action = $subscription->wasRecentlyCreated ? 'create_subscription' : 'update_subscription';
-// Correct parameter order: action, model, modelId, details, userId
-$this->logUserAction(
-    $action,
-    'Subscription',
-    $subscription->id,
-    ['request' => $request->all(), 'subscription_id' => $subscription->id],
-    $request->user_id ?? null
-);
-            // Optionally deduct price from card balance here if needed
+
+            $this->logUserAction(
+                'create_subscription',
+                'Subscription',
+                $subscription->id,
+                ['request' => $request->all(), 'subscription_id' => $subscription->id],
+                $request->user_id ?? null
+            );
+
             return response()->json([
                 'message' => 'Etudiant charged for subscription (monthly) successfully.',
                 'etudiant_id' => $subscription->etudiant_id,
