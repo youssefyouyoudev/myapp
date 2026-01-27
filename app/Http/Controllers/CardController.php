@@ -38,13 +38,6 @@
      * - If not, decrement solde (balance) by 1 if possible.
      */
     function validateCard($cardId)
-    \Log::debug('validateCard called', [
-        'cardId' => $cardId,
-        'request' => request()->all(),
-        'ip' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-        'time' => now()->toDateTimeString()
-    ]);
 {
     $card = Card::with(['etudiant.subscriptions' => function($q) {
         $q->where('status', 'active')
@@ -62,15 +55,15 @@
         ->count();
 
     if ($todayValidations >= 4) {
-        \Log::warning('Card validation blocked: limit reached', [
+        \Log::error('Card validation blocked: limit reached', [
             'card_id' => $card->id,
             'todayValidations' => $todayValidations,
             'date' => $today,
+            'card' => $card,
             'request' => request()->all(),
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'time' => now()->toDateTimeString()
+            'etudiant' => $card->etudiant,
         ]);
+        error_log('Card validation blocked: limit reached for card_id ' . $card->id . ' on ' . $today);
         return response()->json([
             'success' => false,
             'reason' => 'Validation limit reached (4 per day)',
@@ -82,27 +75,23 @@
         ? $card->etudiant->subscriptions->first()
         : null;
     if ($activeSubscription) {
-        \Log::info('Card validation: active subscription', [
+        \Log::error('Card validation: active subscription', [
             'card_id' => $card->id,
             'user_id' => $card->etudiant ? $card->etudiant->user_id : null,
             'subscription_id' => $activeSubscription->id,
             'todayValidations' => $todayValidations,
             'date' => $today,
+            'card' => $card,
             'request' => request()->all(),
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'time' => now()->toDateTimeString()
+            'etudiant' => $card->etudiant,
         ]);
+        error_log('Card validation: active subscription for card_id ' . $card->id . ' on ' . $today);
         // Store validation record
         \App\Models\Validation::create([
             'card_id' => $card->id,
             'validated_at' => $now,
         ]);
 
-        \Log::debug('Card validation success: subscription', [
-            'card_id' => $card->id,
-            'remaining' => 4 - ($todayValidations + 1)
-        ]);
         return response()->json([
             'success' => true,
             'type' => 'subscription',
@@ -124,18 +113,18 @@
         ->first();
 
     if ($voyage) {
-        \Log::info('Card validation: voyage', [
+        \Log::error('Card validation: voyage', [
             'card_id' => $card->id,
             'user_id' => $card->etudiant ? $card->etudiant->user_id : null,
             'voyage_id' => $voyage->id,
             'number_voyages_before' => $voyage->number_voyages,
             'todayValidations' => $todayValidations,
             'date' => $today,
+            'card' => $card,
             'request' => request()->all(),
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'time' => now()->toDateTimeString()
+            'etudiant' => $card->etudiant,
         ]);
+        error_log('Card validation: voyage for card_id ' . $card->id . ' on ' . $today);
         $voyage->number_voyages -= 1;
         $voyage->save();
         // Also decrement card's number_voyages
@@ -147,10 +136,6 @@
         \App\Models\Validation::create([
             'card_id' => $card->id,
             'validated_at' => $now,
-        ]);
-        \Log::debug('Card validation success: voyage', [
-            'card_id' => $card->id,
-            'remaining' => $voyage->number_voyages
         ]);
         return response()->json([
             'success' => true,
@@ -165,11 +150,11 @@
         'user_id' => $card->etudiant ? $card->etudiant->user_id : null,
         'todayValidations' => $todayValidations,
         'date' => $today,
+        'card' => $card,
         'request' => request()->all(),
-        'ip' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-        'time' => now()->toDateTimeString()
+        'etudiant' => $card->etudiant,
     ]);
+    error_log('Card validation failed: insufficient solde and no active subscription for card_id ' . $card->id . ' on ' . $today);
     return response()->json([
         'success' => false,
         'reason' => 'Insufficient solde and no active subscription',
