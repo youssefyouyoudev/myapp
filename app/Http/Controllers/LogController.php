@@ -28,7 +28,10 @@ class LogController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
         $count = $logs->count();
-        $totalAmount = $logs->sum('amount');
+        // Get total amount from payments table for this user and date range
+        $totalAmount = \App\Models\Payment::where('user_id', $user_id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('amount');
         return response()->json([
             'logs' => $logs,
             'count' => $count,
