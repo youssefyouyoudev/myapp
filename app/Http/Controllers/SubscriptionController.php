@@ -52,12 +52,13 @@ class SubscriptionController extends Controller
             ]);
 // Define the action for logging
 $action = $subscription->wasRecentlyCreated ? 'create_subscription' : 'update_subscription';
+// Correct parameter order: action, model, modelId, details, userId
 $this->logUserAction(
-    $request->user_id, // <--- ADD THIS PARAMETER
     $action,
     'Subscription',
     $subscription->id,
-    ['request' => $request->all(), 'subscription_id' => $subscription->id]
+    ['request' => $request->all(), 'subscription_id' => $subscription->id],
+    $request->user_id ?? null
 );
             // Optionally deduct price from card balance here if needed
             return response()->json([
