@@ -24,13 +24,18 @@ class LogController extends Controller
         if (!$startDate || !$endDate) {
             return response()->json(['error' => 'start_date and end_date query parameters are required'], 400);
         }
+        // Ensure both are strings and not numbers
+        if (!is_string($startDate) || !is_string($endDate)) {
+            return response()->json(['error' => 'start_date and end_date must be strings'], 400);
+        }
+        $dateRange = [$startDate, $endDate];
         $logs = Log::where('user_id', $user_id)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('created_at', $dateRange)
             ->get();
         $count = $logs->count();
         // Get total amount from payments table for this user and date range
         $totalAmount = \App\Models\Payment::where('user_id', $user_id)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('created_at', $dateRange)
             ->sum('amount');
         return response()->json([
             'logs' => $logs,

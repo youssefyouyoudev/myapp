@@ -37,6 +37,17 @@ class VoyageController extends Controller
             'input' => $request->all()
         ]);
         return response()->json(['message' => 'Validation error', 'errors' => $e->errors()], 422);
+    } catch (\Throwable $e) {
+        Log::error('Unexpected error in voyage charge:', [
+            'exception' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'input' => $request->all(),
+            'etudiantId_type' => gettype($etudiantId),
+            'etudiantId_value' => $etudiantId,
+            'request_params_types' => array_map('gettype', $request->all()),
+            'request_params_values' => $request->all(),
+        ]);
+        return response()->json(['message' => 'Internal server error', 'error' => $e->getMessage()], 500);
     }
     $card = \App\Models\Card::where('uuid', $validated['card_uuid'])->firstOrFail();
     $data = $validated;
