@@ -17,8 +17,13 @@ class LogController extends Controller
         return response()->json($logs);
 
     }
-    public function getByUserIdAndDateRange($user_id, $startDate, $endDate)
+    public function getByUserIdAndDateRange(Request $request, $user_id)
     {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        if (!$startDate || !$endDate) {
+            return response()->json(['error' => 'start_date and end_date query parameters are required'], 400);
+        }
         $logs = Log::where('user_id', $user_id)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
